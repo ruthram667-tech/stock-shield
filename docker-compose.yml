@@ -1,0 +1,177 @@
+version: "3.9"
+
+services:
+  # ═══════════════════════════════════════════════
+  # Infrastructure
+  # ═══════════════════════════════════════════════
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: ss-mosquitto
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./infra/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - mosquitto-data:/mosquitto/data
+      - mosquitto-log:/mosquitto/log
+    healthcheck:
+      test: ["CMD-SHELL", "mosquitto_sub -h localhost -t '$$SYS/#' -C 1 -W 3"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ss-net
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: ss-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-stockshield}
+      POSTGRES_USER: ${POSTGRES_USER:-stockshield}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme_pg_secret}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-stockshield}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ss-net
+
+  influxdb:
+    image: influxdb:2.7
+    container_name: ss-influxdb
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: admin
+      DOCKER_INFLUXDB_INIT_PASSWORD: changeme_influx
+      DOCKER_INFLUXDB_INIT_ORG: ${INFLUXDB_ORG:-stockshield}
+      DOCKER_INFLUXDB_INIT_BUCKET: ${INFLUXDB_BUCKET:-telemetry}
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUXDB_TOKEN:-changeme_influx_token}
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb-data:/var/lib/influxdb2
+    healthcheck:
+      test: ["CMD", "influx", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ss-net
+
+  # ═══════════════════════════════════════════════
+  # Edge Simulator
+  # ═══════════════════════════════════════════════
+
+  edge-simulator:
+    build:
+      context: ./edge-simulator
+      dockerfile: Dockerfile
+    container_name: ss-edge-simulator
+    environment:
+      MQTT_BROKER_HOST: ${MQTT_BROKER_HOST:-mosquitto}
+      MQTT_BROKER_PORT: ${MQTT_BROKER_PORT:-1883}
+      SIMULATOR_INTERVAL_SEC: ${SIMULATOR_INTERVAL_SEC:-5}
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+    networks:
+      - ss-net
+
+  # ═══════════════════════════════════════════════
+  # Java Backend
+  # ═══════════════════════════════════════════════
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ss-backend
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-stockshield}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-stockshield}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-changeme_pg_secret}
+      INFLUXDB_URL: ${INFLUXDB_URL:-http://influxdb:8086}
+      INFLUXDB_TOKEN: ${INFLUXDB_TOKEN:-changeme_influx_token}
+      INFLUXDB_ORG: ${INFLUXDB_ORG:-stockshield}
+      INFLUXDB_BUCKET: ${INFLUXDB_BUCKET:-telemetry}
+      MQTT_BROKER_URL: tcp://${MQTT_BROKER_HOST:-mosquitto}:${MQTT_BROKER_PORT:-1883}
+      MQTT_CLIENT_ID: ${MQTT_CLIENT_ID:-stockshield-backend}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_FROM_PHONE: ${TWILIO_FROM_PHONE:-}
+      ALERT_PHONE: ${ALERT_PHONE:-}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}
+      SENDGRID_FROM_EMAIL: ${SENDGRID_FROM_EMAIL:-}
+      ALERT_EMAIL: ${ALERT_EMAIL:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      influxdb:
+        condition: service_healthy
+      mosquitto:
+        condition: service_healthy
+    networks:
+      - ss-net
+
+  # ═══════════════════════════════════════════════
+  # ML Service
+  # ═══════════════════════════════════════════════
+
+  ml-service:
+    build:
+      context: ./ml-service
+      dockerfile: Dockerfile
+    container_name: ss-ml-service
+    ports:
+      - "${ML_SERVICE_PORT:-8000}:8000"
+    environment:
+      INFLUXDB_URL: ${INFLUXDB_URL:-http://influxdb:8086}
+      INFLUXDB_TOKEN: ${INFLUXDB_TOKEN:-changeme_influx_token}
+      INFLUXDB_ORG: ${INFLUXDB_ORG:-stockshield}
+      INFLUXDB_BUCKET: ${INFLUXDB_BUCKET:-telemetry}
+      BACKEND_URL: ${BACKEND_URL:-http://backend:8080}
+      ML_RETRAIN_INTERVAL_HOURS: ${ML_RETRAIN_INTERVAL_HOURS:-6}
+      ML_DEFAULT_LEAD_TIME_DAYS: ${ML_DEFAULT_LEAD_TIME_DAYS:-3}
+      ML_DEFAULT_SERVICE_LEVEL: ${ML_DEFAULT_SERVICE_LEVEL:-0.95}
+    depends_on:
+      influxdb:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    networks:
+      - ss-net
+
+  # ═══════════════════════════════════════════════
+  # React Dashboard
+  # ═══════════════════════════════════════════════
+
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+    container_name: ss-dashboard
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - ss-net
+
+volumes:
+  mosquitto-data:
+  mosquitto-log:
+  postgres-data:
+  influxdb-data:
+
+networks:
+  ss-net:
+    driver: bridge
