@@ -1,15 +1,18 @@
+import { AlertTriangle, AlertCircle } from 'lucide-react';
+
 /**
- * Animated alert severity badge with pulsing dot.
+ * Animated alert severity badge with icon.
  */
 export default function AlertBadge({ severity, count }) {
   if (!count || count === 0) return null;
 
-  const severityClass = severity === 'CRITICAL' ? 'critical' : 'warning';
+  const isCritical = severity === 'CRITICAL';
+  const Icon = isCritical ? AlertCircle : AlertTriangle;
 
   return (
-    <span className={`alert-badge ${severityClass}`}>
-      <span className="alert-dot"></span>
-      {count} {severity === 'CRITICAL' ? 'Critical' : 'Warning'}
+    <span className={`alert-badge ${isCritical ? 'critical' : 'warning'}`}>
+      <Icon size={13} />
+      {count} {isCritical ? 'Critical' : 'Warning'}
     </span>
   );
 }

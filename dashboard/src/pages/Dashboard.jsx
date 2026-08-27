@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { Package, AlertTriangle, Bell, Wifi, Thermometer, Droplets } from 'lucide-react';
 import { fetchDashboardSummary, fetchInventory, fetchRecentAlerts } from '../api';
 import StockGauge from '../components/StockGauge';
 import TelemetryChart from '../components/TelemetryChart';
@@ -27,11 +28,42 @@ const DEMO_ITEMS = [
 ];
 
 const DEMO_ALERTS = [
-  { id: 1, alertType: 'LOW_STOCK', severity: 'WARNING', message: '⚠️ LOW STOCK: Whole Milk — 2.16 kg remaining', shelfId: 'shelf-04', createdAt: new Date().toISOString() },
-  { id: 2, alertType: 'TEMP_SPIKE', severity: 'CRITICAL', message: '🌡️ TEMP SPIKE: shelf-06 at 9.2°C (max: 8.0°C)', shelfId: 'shelf-06', createdAt: new Date(Date.now() - 300000).toISOString() },
-  { id: 3, alertType: 'LOW_STOCK', severity: 'CRITICAL', message: '⚠️ LOW STOCK: Orange Juice — 1.92 kg remaining', shelfId: 'shelf-10', createdAt: new Date(Date.now() - 600000).toISOString() },
-  { id: 4, alertType: 'LOW_STOCK', severity: 'WARNING', message: '⚠️ LOW STOCK: Chicken Breast — 3.30 kg remaining', shelfId: 'shelf-06', createdAt: new Date(Date.now() - 900000).toISOString() },
+  { id: 1, alertType: 'LOW_STOCK', severity: 'WARNING', message: 'LOW STOCK: Whole Milk — 2.16 kg remaining', shelfId: 'shelf-04', createdAt: new Date().toISOString() },
+  { id: 2, alertType: 'TEMP_SPIKE', severity: 'CRITICAL', message: 'TEMP SPIKE: shelf-06 at 9.2°C (max: 8.0°C)', shelfId: 'shelf-06', createdAt: new Date(Date.now() - 300000).toISOString() },
+  { id: 3, alertType: 'LOW_STOCK', severity: 'CRITICAL', message: 'LOW STOCK: Orange Juice — 1.92 kg remaining', shelfId: 'shelf-10', createdAt: new Date(Date.now() - 600000).toISOString() },
+  { id: 4, alertType: 'LOW_STOCK', severity: 'WARNING', message: 'LOW STOCK: Chicken Breast — 3.30 kg remaining', shelfId: 'shelf-06', createdAt: new Date(Date.now() - 900000).toISOString() },
 ];
+
+/** Animated number counter hook */
+function useAnimatedValue(target, duration = 600) {
+  const [value, setValue] = useState(0);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const start = value;
+    const diff = target - start;
+    if (diff === 0) return;
+    const startTime = performance.now();
+
+    const animate = (now) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+      setValue(Math.round(start + diff * eased));
+      if (progress < 1) ref.current = requestAnimationFrame(animate);
+    };
+
+    ref.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(ref.current);
+  }, [target, duration]);
+
+  return value;
+}
+
+function AnimatedValue({ value, suffix = '' }) {
+  const animated = useAnimatedValue(typeof value === 'number' ? value : 0);
+  return <>{animated}{suffix}</>;
+}
 
 export default function Dashboard() {
   const [summary, setSummary] = useState(DEMO_SUMMARY);
@@ -64,10 +96,10 @@ export default function Dashboard() {
   const chartData = items.map(i => Math.round((i.stockPercentage || 0) * 100));
   const chartColors = items.map(i => {
     const pct = i.stockPercentage || 0;
-    if (pct > 0.8) return '#10b981';
-    if (pct > 0.4) return '#3b82f6';
-    if (pct > 0.2) return '#f59e0b';
-    return '#ef4444';
+    if (pct > 0.8) return '#34d399';
+    if (pct > 0.4) return '#4f8efa';
+    if (pct > 0.2) return '#fbbf24';
+    return '#f87171';
   });
 
   const timeLabels = Array.from({ length: 12 }, (_, i) => {
@@ -75,6 +107,22 @@ export default function Dashboard() {
     d.setHours(d.getHours() - 11 + i);
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   });
+
+  const formatAlertTime = (iso) => {
+    const diff = Date.now() - new Date(iso).getTime();
+    if (diff < 60000) return 'Just now';
+    if (diff < 3600000) return `${Math.round(diff / 60000)}m ago`;
+    return `${Math.round(diff / 3600000)}h ago`;
+  };
+
+  const summaryCards = [
+    { label: 'Total Items', value: summary.totalItems, color: 'blue', icon: Package, trend: '+2', trendDir: 'up' },
+    { label: 'Low Stock', value: summary.lowStockCount, color: 'amber', icon: AlertTriangle, trend: summary.lowStockCount > 0 ? `${summary.lowStockCount}` : '0', trendDir: summary.lowStockCount > 2 ? 'down' : 'neutral' },
+    { label: 'Active Alerts', value: summary.activeAlerts, color: 'crimson', icon: Bell, trend: summary.activeAlerts > 3 ? 'High' : 'Normal', trendDir: summary.activeAlerts > 3 ? 'down' : 'neutral' },
+    { label: 'Sensors Online', value: summary.sensorsOnline, color: 'emerald', icon: Wifi, trend: `${summary.sensorsOffline || 0} offline`, trendDir: (summary.sensorsOffline || 0) > 0 ? 'down' : 'up' },
+    { label: 'Avg Temperature', value: null, displayValue: `${typeof summary.avgTemperature === 'number' ? summary.avgTemperature.toFixed(1) : '--'}°`, color: 'cyan', icon: Thermometer, trend: 'Normal', trendDir: 'neutral' },
+    { label: 'Avg Humidity', value: null, displayValue: `${typeof summary.avgHumidity === 'number' ? summary.avgHumidity.toFixed(0) : '--'}%`, color: 'purple', icon: Droplets, trend: 'Normal', trendDir: 'neutral' },
+  ];
 
   return (
     <>
@@ -85,36 +133,24 @@ export default function Dashboard() {
 
       {/* Summary Cards */}
       <div className="summary-grid">
-        <div className="glass-card summary-card blue">
-          <div className="card-icon">📦</div>
-          <div className="card-value">{summary.totalItems}</div>
-          <div className="card-label">Total Items Tracked</div>
-        </div>
-        <div className="glass-card summary-card amber">
-          <div className="card-icon">⚠️</div>
-          <div className="card-value">{summary.lowStockCount}</div>
-          <div className="card-label">Low Stock Items</div>
-        </div>
-        <div className="glass-card summary-card crimson">
-          <div className="card-icon">🚨</div>
-          <div className="card-value">{summary.activeAlerts}</div>
-          <div className="card-label">Active Alerts</div>
-        </div>
-        <div className="glass-card summary-card emerald">
-          <div className="card-icon">📡</div>
-          <div className="card-value">{summary.sensorsOnline}</div>
-          <div className="card-label">Sensors Online</div>
-        </div>
-        <div className="glass-card summary-card cyan">
-          <div className="card-icon">🌡️</div>
-          <div className="card-value">{typeof summary.avgTemperature === 'number' ? summary.avgTemperature.toFixed(1) : '--'}°</div>
-          <div className="card-label">Avg Temperature</div>
-        </div>
-        <div className="glass-card summary-card purple">
-          <div className="card-icon">💧</div>
-          <div className="card-value">{typeof summary.avgHumidity === 'number' ? summary.avgHumidity.toFixed(0) : '--'}%</div>
-          <div className="card-label">Avg Humidity</div>
-        </div>
+        {summaryCards.map((card) => (
+          <div key={card.label} className={`glass-card summary-card ${card.color}`}>
+            <div className="card-icon">
+              <card.icon size={20} />
+            </div>
+            <div className="card-value-row">
+              <div className="card-value">
+                {card.value !== null ? <AnimatedValue value={card.value} /> : card.displayValue}
+              </div>
+              {card.trend && (
+                <span className={`card-trend ${card.trendDir}`}>
+                  {card.trendDir === 'up' ? '↑' : card.trendDir === 'down' ? '↓' : '·'} {card.trend}
+                </span>
+              )}
+            </div>
+            <div className="card-label">{card.label}</div>
+          </div>
+        ))}
       </div>
 
       {/* Charts */}
@@ -126,9 +162,9 @@ export default function Dashboard() {
             datasets={[{
               label: 'Stock Level %',
               data: chartData,
-              color: '#3b82f6',
+              color: '#4f8efa',
               overrides: {
-                backgroundColor: chartColors.map(c => c + '80'),
+                backgroundColor: chartColors.map(c => c + '60'),
                 borderColor: chartColors,
                 borderWidth: 1,
                 borderRadius: 6,
@@ -147,19 +183,19 @@ export default function Dashboard() {
               {
                 label: 'Whole Milk',
                 data: Array.from({ length: 12 }, (_, i) => Math.max(1, 12 - i * 0.8 + Math.random() * 0.5)),
-                color: '#ef4444',
+                color: '#f87171',
                 fill: true,
               },
               {
                 label: 'Basmati Rice',
                 data: Array.from({ length: 12 }, (_, i) => Math.max(5, 20 - i * 0.5 + Math.random())),
-                color: '#3b82f6',
+                color: '#4f8efa',
                 fill: true,
               },
               {
                 label: 'Ice Cream',
                 data: Array.from({ length: 12 }, (_, i) => Math.max(3, 10 - i * 0.3 + Math.random() * 0.4)),
-                color: '#8b5cf6',
+                color: '#a78bfa',
                 fill: true,
               },
             ]}
@@ -172,7 +208,9 @@ export default function Dashboard() {
       {/* Gauges + Alerts */}
       <div className="chart-grid">
         <div className="glass-card" style={{ padding: 24 }}>
-          <div className="card-title" style={{ marginBottom: 20 }}>Stock Gauges</div>
+          <div className="card-title" style={{ marginBottom: 20 }}>
+            <Package size={14} className="title-icon" /> Stock Gauges
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: 16, justifyItems: 'center' }}>
             {items.slice(0, 8).map(item => (
               <Link key={item.id} to={`/inventory/${item.id}`} style={{ textDecoration: 'none' }}>
@@ -186,24 +224,27 @@ export default function Dashboard() {
         </div>
 
         <div className="glass-card" style={{ padding: 24 }}>
-          <div className="card-title" style={{ marginBottom: 16 }}>Recent Alerts</div>
+          <div className="card-title" style={{ marginBottom: 16 }}>
+            <Bell size={14} className="title-icon" /> Recent Alerts
+          </div>
           <div className="alert-feed">
             {alerts.map(alert => (
-              <div key={alert.id} className="alert-feed-item">
+              <div key={alert.id} className={`alert-feed-item severity-${alert.severity === 'CRITICAL' ? 'critical' : 'warning'}`}>
                 <div className={`alert-icon ${alert.severity === 'CRITICAL' ? 'critical' : 'warning'}`}>
-                  {alert.alertType === 'TEMP_SPIKE' ? '🌡️' : '📦'}
+                  {alert.alertType === 'TEMP_SPIKE' ? <Thermometer size={14} /> : <Package size={14} />}
                 </div>
                 <div className="alert-content">
                   <div className="alert-message">{alert.message}</div>
                   <div className="alert-time">
-                    {new Date(alert.createdAt).toLocaleTimeString()} · {alert.shelfId}
+                    {formatAlertTime(alert.createdAt)} · {alert.shelfId}
                   </div>
                 </div>
               </div>
             ))}
             {alerts.length === 0 && (
-              <div style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>
-                ✅ No active alerts
+              <div className="empty-state">
+                <div className="empty-icon">✓</div>
+                <p>No active alerts — all systems normal</p>
               </div>
             )}
           </div>

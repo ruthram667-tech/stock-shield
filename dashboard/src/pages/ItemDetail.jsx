@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { ArrowLeft, AlertTriangle, Thermometer, Droplets } from 'lucide-react';
 import { fetchInventoryItem, fetchTelemetry } from '../api';
 import StockGauge from '../components/StockGauge';
 import TelemetryChart from '../components/TelemetryChart';
@@ -51,11 +52,18 @@ export default function ItemDetail() {
     return Math.max(0, decay + (Math.random() - 0.5) * 0.5);
   });
 
+  const formatTimeLeft = () => {
+    const h = item.estimatedHoursRemaining;
+    if (h > 999) return '∞';
+    if (h > 24) return `${Math.round(h / 24)}d`;
+    return `${Math.round(h)}h`;
+  };
+
   return (
     <>
       <div className="page-header">
-        <Link to="/inventory" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: 8, display: 'inline-block' }}>
-          ← Back to Inventory
+        <Link to="/inventory" className="back-link">
+          <ArrowLeft size={14} /> Back to Inventory
         </Link>
         <h2>{item.name}</h2>
         <p>{item.category} · {item.zone} · {item.shelfId}</p>
@@ -63,34 +71,33 @@ export default function ItemDetail() {
 
       {/* Status Cards */}
       <div className="summary-grid">
-        <div className="glass-card summary-card blue">
+        <div className="glass-card summary-card blue" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           <StockGauge percentage={item.stockPercentage || 0} size={80} />
-          <div className="card-label" style={{ marginTop: 8 }}>Stock Level</div>
+          <div className="card-label" style={{ marginTop: 10 }}>Stock Level</div>
         </div>
         <div className="glass-card summary-card emerald" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <div className="card-value">{item.currentWeight?.toFixed(1)} <span style={{ fontSize: '1rem', fontWeight: 400 }}>kg</span></div>
+          <div className="card-value">{item.currentWeight?.toFixed(1)} <span style={{ fontSize: '1rem', fontWeight: 400, color: 'var(--text-secondary)' }}>kg</span></div>
           <div className="card-label">Current Weight (of {item.fullWeight} {item.unit})</div>
         </div>
         <div className="glass-card summary-card amber" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <div className="card-value">{item.depletionRate?.toFixed(2)} <span style={{ fontSize: '1rem', fontWeight: 400 }}>kg/h</span></div>
+          <div className="card-value">{item.depletionRate?.toFixed(2)} <span style={{ fontSize: '1rem', fontWeight: 400, color: 'var(--text-secondary)' }}>kg/h</span></div>
           <div className="card-label">Depletion Rate</div>
         </div>
         <div className="glass-card summary-card crimson" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <div className="card-value">
-            {item.estimatedHoursRemaining > 999 ? '∞' : item.estimatedHoursRemaining > 24 ? `${Math.round(item.estimatedHoursRemaining / 24)}d` : `${Math.round(item.estimatedHoursRemaining)}h`}
-          </div>
+          <div className="card-value">{formatTimeLeft()}</div>
           <div className="card-label">Time Remaining</div>
         </div>
       </div>
 
       {/* Reorder Status */}
       {item.needsReorder && (
-        <div className="glass-card" style={{ padding: '16px 24px', marginBottom: 20, borderColor: 'rgba(239, 68, 68, 0.3)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span className="badge critical">NEEDS REORDER</span>
-            <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-              Current weight ({item.currentWeight?.toFixed(1)} kg) is below the reorder point ({item.reorderPoint} kg)
-            </span>
+        <div className="glass-card reorder-banner">
+          <div className="reorder-icon">
+            <AlertTriangle size={18} />
+          </div>
+          <div className="reorder-text">
+            <strong>NEEDS REORDER</strong>
+            <p>Current weight ({item.currentWeight?.toFixed(1)} kg) is below the reorder point ({item.reorderPoint} kg)</p>
           </div>
         </div>
       )}
@@ -118,13 +125,13 @@ export default function ItemDetail() {
             {
               label: 'Weight',
               data: weightData,
-              color: '#3b82f6',
+              color: '#4f8efa',
               fill: true,
             },
             {
               label: 'Reorder Point',
               data: chartLabels.map(() => item.reorderPoint),
-              color: '#ef4444',
+              color: '#f87171',
               overrides: {
                 borderDash: [8, 4],
                 pointRadius: 0,
@@ -139,22 +146,26 @@ export default function ItemDetail() {
       {/* Environment */}
       {(item.temperature != null || item.humidity != null) && (
         <div className="glass-card" style={{ padding: 24 }}>
-          <div className="card-title" style={{ marginBottom: 16 }}>Environment</div>
+          <div className="card-title" style={{ marginBottom: 18 }}>
+            <Thermometer size={14} className="title-icon" /> Environment
+          </div>
           <div style={{ display: 'flex', gap: 48 }}>
             {item.temperature != null && (
               <div className="env-metric safe">
-                <div className="value" style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--accent-cyan)' }}>
+                <div className="value" style={{ fontSize: '1.8rem', fontWeight: 700, color: 'var(--accent-cyan)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Thermometer size={20} style={{ opacity: 0.5 }} />
                   {item.temperature.toFixed(1)}°C
                 </div>
-                <div className="label" style={{ color: 'var(--text-muted)' }}>Temperature</div>
+                <div className="label" style={{ color: 'var(--text-muted)', marginLeft: 26 }}>Temperature</div>
               </div>
             )}
             {item.humidity != null && (
               <div className="env-metric">
-                <div className="value" style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--accent-blue)' }}>
+                <div className="value" style={{ fontSize: '1.8rem', fontWeight: 700, color: 'var(--accent-blue)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Droplets size={20} style={{ opacity: 0.5 }} />
                   {item.humidity.toFixed(0)}%
                 </div>
-                <div className="label" style={{ color: 'var(--text-muted)' }}>Humidity</div>
+                <div className="label" style={{ color: 'var(--text-muted)', marginLeft: 26 }}>Humidity</div>
               </div>
             )}
           </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { Package, Search } from 'lucide-react';
 import { fetchInventory } from '../api';
 
 const DEMO_ITEMS = [
@@ -18,6 +19,25 @@ const DEMO_ITEMS = [
 ];
 
 const CATEGORIES = ['All', 'dry-goods', 'dairy', 'meat', 'frozen', 'condiments', 'beverages', 'canned'];
+
+function StockBar({ percentage, level }) {
+  const pct = Math.round(Math.min(1, Math.max(0, percentage)) * 100);
+  const levelClass = (level || 'adequate').toLowerCase();
+
+  return (
+    <div className="stock-bar">
+      <div className="stock-bar-track">
+        <div
+          className={`stock-bar-fill ${levelClass}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <span className={`stock-bar-label`} style={{ color: `var(--accent-${levelClass === 'full' ? 'emerald' : levelClass === 'adequate' ? 'blue' : levelClass === 'low' ? 'amber' : 'crimson'})` }}>
+        {pct}%
+      </span>
+    </div>
+  );
+}
 
 export default function Inventory() {
   const [items, setItems] = useState(DEMO_ITEMS);
@@ -59,10 +79,20 @@ export default function Inventory() {
     return result;
   }, [items, filter, search, sortField, sortDir]);
 
+  const getCategoryCount = (cat) => {
+    if (cat === 'All') return items.length;
+    return items.filter(i => i.category === cat).length;
+  };
+
   const formatHours = (h) => {
     if (h > 999) return '∞';
     if (h > 24) return `${Math.round(h / 24)}d`;
     return `${Math.round(h)}h`;
+  };
+
+  const getSortIndicator = (field) => {
+    if (sortField !== field) return '';
+    return sortDir === 'asc' ? ' ↑' : ' ↓';
   };
 
   return (
@@ -80,6 +110,7 @@ export default function Inventory() {
             onClick={() => setFilter(cat)}
           >
             {cat === 'All' ? 'All' : cat.replace('-', ' ')}
+            <span className="filter-count">{getCategoryCount(cat)}</span>
           </button>
         ))}
         <input
@@ -87,6 +118,7 @@ export default function Inventory() {
           placeholder="Search items..."
           value={search}
           onChange={e => setSearch(e.target.value)}
+          style={{ marginLeft: 'auto' }}
         />
       </div>
 
@@ -95,13 +127,13 @@ export default function Inventory() {
           <table className="data-table">
             <thead>
               <tr>
-                <th onClick={() => handleSort('name')}>Product {sortField === 'name' ? (sortDir === 'asc' ? '↑' : '↓') : ''}</th>
-                <th onClick={() => handleSort('category')}>Category</th>
-                <th onClick={() => handleSort('shelfId')}>Shelf</th>
-                <th onClick={() => handleSort('currentWeight')}>Weight</th>
-                <th onClick={() => handleSort('stockPercentage')}>Stock Level</th>
-                <th onClick={() => handleSort('depletionRate')}>Depletion</th>
-                <th onClick={() => handleSort('estimatedHoursRemaining')}>Time Left</th>
+                <th onClick={() => handleSort('name')}>Product{getSortIndicator('name')}</th>
+                <th onClick={() => handleSort('category')}>Category{getSortIndicator('category')}</th>
+                <th onClick={() => handleSort('shelfId')}>Shelf{getSortIndicator('shelfId')}</th>
+                <th onClick={() => handleSort('currentWeight')}>Weight{getSortIndicator('currentWeight')}</th>
+                <th onClick={() => handleSort('stockPercentage')} style={{ minWidth: 160 }}>Stock Level{getSortIndicator('stockPercentage')}</th>
+                <th onClick={() => handleSort('depletionRate')}>Depletion{getSortIndicator('depletionRate')}</th>
+                <th onClick={() => handleSort('estimatedHoursRemaining')}>Time Left{getSortIndicator('estimatedHoursRemaining')}</th>
                 <th>Status</th>
               </tr>
             </thead>
@@ -113,17 +145,20 @@ export default function Inventory() {
                       {item.name}
                     </Link>
                   </td>
-                  <td>{item.category}</td>
-                  <td>{item.shelfId}</td>
+                  <td>
+                    <span className="category-pill">{item.category?.replace('-', ' ')}</span>
+                  </td>
+                  <td style={{ fontVariantNumeric: 'tabular-nums', color: 'var(--text-muted)' }}>{item.shelfId}</td>
                   <td style={{ fontVariantNumeric: 'tabular-nums' }}>
                     {item.currentWeight?.toFixed(1)} / {item.fullWeight} {item.unit}
                   </td>
                   <td>
-                    <span className={`badge ${(item.stockLevel || 'adequate').toLowerCase()}`}>
-                      {Math.round((item.stockPercentage || 0) * 100)}%
-                    </span>
+                    <StockBar
+                      percentage={item.stockPercentage || 0}
+                      level={item.stockLevel}
+                    />
                   </td>
-                  <td style={{ fontVariantNumeric: 'tabular-nums' }}>
+                  <td style={{ fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)', fontSize: '0.78rem' }}>
                     {item.depletionRate?.toFixed(2)} kg/h
                   </td>
                   <td style={{ fontVariantNumeric: 'tabular-nums' }}>
@@ -133,7 +168,7 @@ export default function Inventory() {
                     {item.needsReorder ? (
                       <span className="badge critical">REORDER</span>
                     ) : (
-                      <span style={{ color: 'var(--accent-emerald)', fontSize: '0.8rem' }}>OK</span>
+                      <span className="badge full" style={{ background: 'rgba(52, 211, 153, 0.08)', border: '1px solid rgba(52, 211, 153, 0.15)' }}>OK</span>
                     )}
                   </td>
                 </tr>
@@ -141,6 +176,12 @@ export default function Inventory() {
             </tbody>
           </table>
         </div>
+        {filtered.length === 0 && (
+          <div className="empty-state">
+            <div className="empty-icon"><Search size={32} /></div>
+            <p>No items match your search or filters</p>
+          </div>
+        )}
       </div>
     </>
   );

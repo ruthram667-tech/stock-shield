@@ -29,7 +29,7 @@ public class TelemetryRepository {
     private String bucket;
 
     @Value("${influxdb.org}")
-    private String org;
+    private String influxOrg;
 
     /**
      * Write a weight reading to InfluxDB.
@@ -42,7 +42,7 @@ public class TelemetryRepository {
                     .addTag("itemId", itemId)
                     .addField("value", weightKg)
                     .time(Instant.now(), WritePrecision.MS);
-            writeApi.writePoint(bucket, org, point);
+            writeApi.writePoint(bucket, influxOrg, point);
         } catch (Exception e) {
             log.error("Failed to write weight to InfluxDB: {}", e.getMessage());
         }
@@ -59,7 +59,7 @@ public class TelemetryRepository {
                     .addField("temperature", tempC)
                     .addField("humidity", humidityPct)
                     .time(Instant.now(), WritePrecision.MS);
-            writeApi.writePoint(bucket, org, point);
+            writeApi.writePoint(bucket, influxOrg, point);
         } catch (Exception e) {
             log.error("Failed to write environment to InfluxDB: {}", e.getMessage());
         }
@@ -123,7 +123,7 @@ public class TelemetryRepository {
         List<Map<String, Object>> results = new ArrayList<>();
         try {
             QueryApi queryApi = influxDBClient.getQueryApi();
-            List<FluxTable> tables = queryApi.query(flux, org);
+            List<FluxTable> tables = queryApi.query(flux, influxOrg);
             for (FluxTable table : tables) {
                 for (FluxRecord record : table.getRecords()) {
                     Map<String, Object> row = new LinkedHashMap<>();

@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { Thermometer, Droplets, Info } from 'lucide-react';
 import TelemetryChart from '../components/TelemetryChart';
 
 const ZONES = [
@@ -40,6 +41,15 @@ export default function Environment() {
     return 'safe';
   };
 
+  const getTempProximity = (temp, range) => {
+    const total = range.max - range.min;
+    const distFromEdge = Math.min(temp - range.min, range.max - temp);
+    return Math.max(0, Math.min(100, (distFromEdge / (total / 2)) * 100));
+  };
+
+  const getAvgTemp = (temps) => temps.reduce((a, b) => a + b, 0) / temps.length;
+  const getAvgHum = (hums) => hums.reduce((a, b) => a + b, 0) / hums.length;
+
   // Demo chart data
   const timeLabels = Array.from({ length: 24 }, (_, i) => {
     const d = new Date();
@@ -56,35 +66,57 @@ export default function Environment() {
 
       {/* Zone Cards */}
       <div className="env-grid" style={{ marginBottom: 28 }}>
-        {ZONES.map(zone => (
-          <div
-            key={zone.zone}
-            className="glass-card env-card"
-            style={{ cursor: 'pointer', borderColor: selectedZone === zone.zone ? 'var(--border-accent)' : undefined }}
-            onClick={() => setSelectedZone(selectedZone === zone.zone ? null : zone.zone)}
-          >
-            <div className="env-zone">{zone.name}</div>
-            <div className="env-values">
-              <div className={`env-metric ${getTempStatus(zone.currentTemp[0], zone.tempRange)}`}>
-                <div className="value">{zone.currentTemp[0].toFixed(1)}°C</div>
-                <div className="label">Avg Temp</div>
+        {ZONES.map(zone => {
+          const avgTemp = getAvgTemp(zone.currentTemp);
+          const avgHum = getAvgHum(zone.currentHumidity);
+          const tempStatus = getTempStatus(avgTemp, zone.tempRange);
+          const proximity = getTempProximity(avgTemp, zone.tempRange);
+          const proximityStatus = proximity > 60 ? 'safe' : proximity > 30 ? 'warning' : 'danger';
+          const isSelected = selectedZone === zone.zone;
+
+          return (
+            <div
+              key={zone.zone}
+              className={`glass-card env-card ${isSelected ? 'selected' : ''}`}
+              onClick={() => setSelectedZone(isSelected ? null : zone.zone)}
+            >
+              <div className="env-zone">
+                <span className="zone-dot" style={{ background: tempStatus === 'danger' ? 'var(--accent-crimson)' : tempStatus === 'warning' ? 'var(--accent-amber)' : 'var(--accent-emerald)' }} />
+                {zone.name}
               </div>
-              <div className="env-metric safe">
-                <div className="value">{zone.currentHumidity[0].toFixed(0)}%</div>
-                <div className="label">Avg Humidity</div>
+              <div className="env-values">
+                <div className={`env-metric ${tempStatus}`}>
+                  <div className="value">
+                    <Thermometer size={16} style={{ marginRight: 4, verticalAlign: -2, opacity: 0.6 }} />
+                    {avgTemp.toFixed(1)}°C
+                  </div>
+                  <div className="label">Avg Temperature</div>
+                </div>
+                <div className="env-metric safe">
+                  <div className="value">
+                    <Droplets size={16} style={{ marginRight: 4, verticalAlign: -2, opacity: 0.6 }} />
+                    {avgHum.toFixed(0)}%
+                  </div>
+                  <div className="label">Avg Humidity</div>
+                </div>
+              </div>
+              <div className="limit-bar">
+                <div className={`limit-bar-fill ${proximityStatus}`} style={{ width: `${100 - proximity}%` }} />
+              </div>
+              <div className="env-footer">
+                <Info size={11} />
+                Safe range: {zone.tempRange.min}°C to {zone.tempRange.max}°C · {zone.shelves.length} shelves
               </div>
             </div>
-            <div style={{ marginTop: 12, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-              Safe range: {zone.tempRange.min}°C to {zone.tempRange.max}°C · {zone.shelves.length} shelves
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Per-Shelf Details */}
       {ZONES.map(zone => (
         <div key={zone.zone} style={{ display: selectedZone === null || selectedZone === zone.zone ? 'block' : 'none' }}>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: 16, color: 'var(--text-secondary)' }}>
+          <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: 16, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Thermometer size={16} style={{ opacity: 0.5 }} />
             {zone.name} — Shelf Details
           </h3>
           <div className="glass-card" style={{ marginBottom: 20, overflow: 'hidden' }}>
@@ -104,16 +136,18 @@ export default function Environment() {
                     const tempStatus = getTempStatus(zone.currentTemp[i], zone.tempRange);
                     return (
                       <tr key={shelf}>
-                        <td style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{shelf}</td>
+                        <td style={{ fontWeight: 500, color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>{shelf}</td>
                         <td>{zone.products[i]}</td>
                         <td style={{
                           color: tempStatus === 'danger' ? 'var(--accent-crimson)' :
                                  tempStatus === 'warning' ? 'var(--accent-amber)' : 'var(--accent-emerald)',
-                          fontWeight: 600, fontVariantNumeric: 'tabular-nums'
+                          fontWeight: 600, fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)', fontSize: '0.82rem'
                         }}>
                           {zone.currentTemp[i].toFixed(1)}°C
                         </td>
-                        <td style={{ fontVariantNumeric: 'tabular-nums' }}>{zone.currentHumidity[i].toFixed(1)}%</td>
+                        <td style={{ fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)', fontSize: '0.82rem' }}>
+                          {zone.currentHumidity[i].toFixed(1)}%
+                        </td>
                         <td>
                           <span className={`badge ${tempStatus === 'danger' ? 'critical' : tempStatus === 'warning' ? 'low' : 'full'}`}>
                             {tempStatus === 'danger' ? 'OUT OF RANGE' : tempStatus === 'warning' ? 'NEAR LIMIT' : 'NORMAL'}
@@ -137,7 +171,7 @@ export default function Environment() {
                 data: timeLabels.map(() =>
                   zone.currentTemp[i] + (Math.random() - 0.5) * 1.5
                 ),
-                color: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'][i],
+                color: ['#4f8efa', '#34d399', '#fbbf24', '#f87171'][i],
               }))}
               title={`${zone.name} — Temperature (24h)`}
               yAxisLabel="Temperature (°C)"
