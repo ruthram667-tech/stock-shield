@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Package, AlertTriangle, Bell, Wifi, Thermometer, Droplets } from 'lucide-react';
+import { Package, AlertTriangle, Bell, Wifi, Thermometer, Droplets, CheckCircle2 } from 'lucide-react';
 import { fetchDashboardSummary, fetchInventory, fetchRecentAlerts } from '../api';
 import StockGauge from '../components/StockGauge';
 import TelemetryChart from '../components/TelemetryChart';
 
-// Demo data for initial render (before API connects)
+// Demo data for initial render
 const DEMO_SUMMARY = {
   totalItems: 12, lowStockCount: 3, criticalStockCount: 1,
   activeAlerts: 4, avgTemperature: 4.2, avgHumidity: 55.3,
@@ -13,18 +13,14 @@ const DEMO_SUMMARY = {
 };
 
 const DEMO_ITEMS = [
-  { id: 'item-001', name: 'Basmati Rice', stockPercentage: 0.72, shelfId: 'shelf-01', depletionRate: 0.12 },
-  { id: 'item-002', name: 'All-Purpose Flour', stockPercentage: 0.45, shelfId: 'shelf-02', depletionRate: 0.08 },
-  { id: 'item-003', name: 'Granulated Sugar', stockPercentage: 0.88, shelfId: 'shelf-03', depletionRate: 0.05 },
-  { id: 'item-004', name: 'Whole Milk', stockPercentage: 0.18, shelfId: 'shelf-04', depletionRate: 0.25 },
-  { id: 'item-005', name: 'Cheddar Cheese', stockPercentage: 0.62, shelfId: 'shelf-05', depletionRate: 0.06 },
-  { id: 'item-006', name: 'Chicken Breast', stockPercentage: 0.33, shelfId: 'shelf-06', depletionRate: 0.18 },
-  { id: 'item-007', name: 'Frozen Vegetables', stockPercentage: 0.91, shelfId: 'shelf-07', depletionRate: 0.04 },
-  { id: 'item-008', name: 'Ice Cream', stockPercentage: 0.55, shelfId: 'shelf-08', depletionRate: 0.07 },
-  { id: 'item-009', name: 'Olive Oil', stockPercentage: 0.78, shelfId: 'shelf-09', depletionRate: 0.03 },
-  { id: 'item-010', name: 'Orange Juice', stockPercentage: 0.12, shelfId: 'shelf-10', depletionRate: 0.20 },
-  { id: 'item-011', name: 'Canned Tomatoes', stockPercentage: 0.67, shelfId: 'shelf-11', depletionRate: 0.06 },
-  { id: 'item-012', name: 'Penne Pasta', stockPercentage: 0.41, shelfId: 'shelf-12', depletionRate: 0.09 },
+  { id: 'item-001', name: 'Basmati Rice', stockPercentage: 0.72 },
+  { id: 'item-002', name: 'All-Purpose Flour', stockPercentage: 0.45 },
+  { id: 'item-003', name: 'Granulated Sugar', stockPercentage: 0.88 },
+  { id: 'item-004', name: 'Whole Milk', stockPercentage: 0.18 },
+  { id: 'item-005', name: 'Cheddar Cheese', stockPercentage: 0.62 },
+  { id: 'item-006', name: 'Chicken Breast', stockPercentage: 0.33 },
+  { id: 'item-007', name: 'Frozen Vegetables', stockPercentage: 0.91 },
+  { id: 'item-008', name: 'Ice Cream', stockPercentage: 0.55 },
 ];
 
 const DEMO_ALERTS = [
@@ -34,7 +30,6 @@ const DEMO_ALERTS = [
   { id: 4, alertType: 'LOW_STOCK', severity: 'WARNING', message: 'LOW STOCK: Chicken Breast — 3.30 kg remaining', shelfId: 'shelf-06', createdAt: new Date(Date.now() - 900000).toISOString() },
 ];
 
-/** Animated number counter hook */
 function useAnimatedValue(target, duration = 600) {
   const [value, setValue] = useState(0);
   const ref = useRef(null);
@@ -48,7 +43,7 @@ function useAnimatedValue(target, duration = 600) {
     const animate = (now) => {
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
       setValue(Math.round(start + diff * eased));
       if (progress < 1) ref.current = requestAnimationFrame(animate);
     };
@@ -91,16 +86,8 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  // Generate chart data from items
   const chartLabels = items.map(i => i.name?.split(' ')[0] || i.id);
   const chartData = items.map(i => Math.round((i.stockPercentage || 0) * 100));
-  const chartColors = items.map(i => {
-    const pct = i.stockPercentage || 0;
-    if (pct > 0.8) return '#34d399';
-    if (pct > 0.4) return '#4f8efa';
-    if (pct > 0.2) return '#fbbf24';
-    return '#f87171';
-  });
 
   const timeLabels = Array.from({ length: 12 }, (_, i) => {
     const d = new Date();
@@ -116,12 +103,12 @@ export default function Dashboard() {
   };
 
   const summaryCards = [
-    { label: 'Total Items', value: summary.totalItems, color: 'blue', icon: Package, trend: '+2', trendDir: 'up' },
-    { label: 'Low Stock', value: summary.lowStockCount, color: 'amber', icon: AlertTriangle, trend: summary.lowStockCount > 0 ? `${summary.lowStockCount}` : '0', trendDir: summary.lowStockCount > 2 ? 'down' : 'neutral' },
-    { label: 'Active Alerts', value: summary.activeAlerts, color: 'crimson', icon: Bell, trend: summary.activeAlerts > 3 ? 'High' : 'Normal', trendDir: summary.activeAlerts > 3 ? 'down' : 'neutral' },
-    { label: 'Sensors Online', value: summary.sensorsOnline, color: 'emerald', icon: Wifi, trend: `${summary.sensorsOffline || 0} offline`, trendDir: (summary.sensorsOffline || 0) > 0 ? 'down' : 'up' },
-    { label: 'Avg Temperature', value: null, displayValue: `${typeof summary.avgTemperature === 'number' ? summary.avgTemperature.toFixed(1) : '--'}°`, color: 'cyan', icon: Thermometer, trend: 'Normal', trendDir: 'neutral' },
-    { label: 'Avg Humidity', value: null, displayValue: `${typeof summary.avgHumidity === 'number' ? summary.avgHumidity.toFixed(0) : '--'}%`, color: 'purple', icon: Droplets, trend: 'Normal', trendDir: 'neutral' },
+    { label: 'Total Items', value: summary.totalItems, icon: Package, trend: '+2', trendDir: 'up' },
+    { label: 'Low Stock', value: summary.lowStockCount, icon: AlertTriangle, trend: summary.lowStockCount > 0 ? `${summary.lowStockCount}` : '0', trendDir: summary.lowStockCount > 2 ? 'down' : 'neutral' },
+    { label: 'Active Alerts', value: summary.activeAlerts, icon: Bell, trend: summary.activeAlerts > 3 ? 'High' : 'Normal', trendDir: summary.activeAlerts > 3 ? 'down' : 'neutral' },
+    { label: 'Sensors Online', value: summary.sensorsOnline, icon: Wifi, trend: `${summary.sensorsOffline || 0} offline`, trendDir: (summary.sensorsOffline || 0) > 0 ? 'down' : 'up' },
+    { label: 'Avg Temp', value: null, displayValue: `${typeof summary.avgTemperature === 'number' ? summary.avgTemperature.toFixed(1) : '--'}°`, icon: Thermometer, trend: 'Normal', trendDir: 'neutral' },
+    { label: 'Avg Humidity', value: null, displayValue: `${typeof summary.avgHumidity === 'number' ? summary.avgHumidity.toFixed(0) : '--'}%`, icon: Droplets, trend: 'Normal', trendDir: 'neutral' },
   ];
 
   return (
@@ -134,9 +121,10 @@ export default function Dashboard() {
       {/* Summary Cards */}
       <div className="summary-grid">
         {summaryCards.map((card) => (
-          <div key={card.label} className={`glass-card summary-card ${card.color}`}>
-            <div className="card-icon">
-              <card.icon size={20} />
+          <div key={card.label} className="summary-card">
+            <div className="card-label">
+              {card.label}
+              <card.icon size={16} strokeWidth={2} />
             </div>
             <div className="card-value-row">
               <div className="card-value">
@@ -148,7 +136,6 @@ export default function Dashboard() {
                 </span>
               )}
             </div>
-            <div className="card-label">{card.label}</div>
           </div>
         ))}
       </div>
@@ -156,26 +143,31 @@ export default function Dashboard() {
       {/* Charts */}
       <div className="chart-grid">
         <div className="glass-card chart-container">
+          <div className="card-title" style={{ marginBottom: 16 }}>
+            <Package size={16} strokeWidth={2} /> Stock Levels (%)
+          </div>
           <TelemetryChart
             type="bar"
             labels={chartLabels}
             datasets={[{
-              label: 'Stock Level %',
+              label: 'Stock %',
               data: chartData,
-              color: '#4f8efa',
+              color: '#2563eb', // solid primary
               overrides: {
-                backgroundColor: chartColors.map(c => c + '60'),
-                borderColor: chartColors,
+                backgroundColor: 'rgba(37, 99, 235, 0.2)',
+                borderColor: '#2563eb',
                 borderWidth: 1,
-                borderRadius: 6,
+                borderRadius: 4,
               }
             }]}
-            title="Current Stock Levels"
             yAxisLabel="Stock %"
           />
         </div>
 
         <div className="glass-card chart-container">
+          <div className="card-title" style={{ marginBottom: 16 }}>
+            <Thermometer size={16} strokeWidth={2} /> Weight Trends
+          </div>
           <TelemetryChart
             type="line"
             labels={timeLabels}
@@ -183,23 +175,16 @@ export default function Dashboard() {
               {
                 label: 'Whole Milk',
                 data: Array.from({ length: 12 }, (_, i) => Math.max(1, 12 - i * 0.8 + Math.random() * 0.5)),
-                color: '#f87171',
-                fill: true,
+                color: '#dc2626',
+                fill: false,
               },
               {
                 label: 'Basmati Rice',
                 data: Array.from({ length: 12 }, (_, i) => Math.max(5, 20 - i * 0.5 + Math.random())),
-                color: '#4f8efa',
-                fill: true,
-              },
-              {
-                label: 'Ice Cream',
-                data: Array.from({ length: 12 }, (_, i) => Math.max(3, 10 - i * 0.3 + Math.random() * 0.4)),
-                color: '#a78bfa',
-                fill: true,
-              },
+                color: '#2563eb',
+                fill: false,
+              }
             ]}
-            title="Weight Trends (Last 12h)"
             yAxisLabel="Weight (kg)"
           />
         </div>
@@ -209,9 +194,9 @@ export default function Dashboard() {
       <div className="chart-grid">
         <div className="glass-card" style={{ padding: 24 }}>
           <div className="card-title" style={{ marginBottom: 20 }}>
-            <Package size={14} className="title-icon" /> Stock Gauges
+            <Package size={16} strokeWidth={2} /> Stock Gauges
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: 16, justifyItems: 'center' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 24, justifyItems: 'center' }}>
             {items.slice(0, 8).map(item => (
               <Link key={item.id} to={`/inventory/${item.id}`} style={{ textDecoration: 'none' }}>
                 <StockGauge
@@ -225,15 +210,12 @@ export default function Dashboard() {
 
         <div className="glass-card" style={{ padding: 24 }}>
           <div className="card-title" style={{ marginBottom: 16 }}>
-            <Bell size={14} className="title-icon" /> Recent Alerts
+            <Bell size={16} strokeWidth={2} /> Recent Alerts
           </div>
           <div className="alert-feed">
             {alerts.map(alert => (
               <div key={alert.id} className={`alert-feed-item severity-${alert.severity === 'CRITICAL' ? 'critical' : 'warning'}`}>
-                <div className={`alert-icon ${alert.severity === 'CRITICAL' ? 'critical' : 'warning'}`}>
-                  {alert.alertType === 'TEMP_SPIKE' ? <Thermometer size={14} /> : <Package size={14} />}
-                </div>
-                <div className="alert-content">
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <div className="alert-message">{alert.message}</div>
                   <div className="alert-time">
                     {formatAlertTime(alert.createdAt)} · {alert.shelfId}
@@ -242,9 +224,9 @@ export default function Dashboard() {
               </div>
             ))}
             {alerts.length === 0 && (
-              <div className="empty-state">
-                <div className="empty-icon">✓</div>
-                <p>No active alerts — all systems normal</p>
+              <div style={{ padding: 32, textAlign: 'center', color: 'var(--text-low)' }}>
+                <CheckCircle2 size={32} strokeWidth={1.5} style={{ margin: '0 auto 12px' }} />
+                <p style={{ fontSize: '0.875rem' }}>No active alerts. All systems nominal.</p>
               </div>
             )}
           </div>

@@ -13,7 +13,7 @@ export default function Sidebar() {
     <aside className="sidebar">
       <div className="sidebar-brand">
         <div className="brand-icon">
-          <Shield size={18} strokeWidth={2.5} />
+          <Shield size={20} strokeWidth={2} />
         </div>
         <h1>Stock Shield</h1>
       </div>
@@ -27,18 +27,14 @@ export default function Sidebar() {
             className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
             end={item.path === '/'}
           >
-            <span className="nav-icon">
-              <item.icon size={18} />
-            </span>
+            <item.icon size={16} className="nav-icon" strokeWidth={2} />
             <span>{item.label}</span>
           </NavLink>
         ))}
 
         <span className="nav-section-label" style={{ marginTop: 'auto' }}>System</span>
         <div className="nav-item">
-          <span className="nav-icon">
-            <Settings size={18} />
-          </span>
+          <Settings size={16} className="nav-icon" strokeWidth={2} />
           <span>Settings</span>
         </div>
       </nav>
@@ -50,7 +46,6 @@ export default function Sidebar() {
           <div className="user-role">Administrator</div>
         </div>
       </div>
-      <div className="sidebar-version">Stock Shield v1.0.0</div>
     </aside>
   );
 }
