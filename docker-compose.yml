@@ -159,7 +159,9 @@ services:
       dockerfile: Dockerfile
     container_name: ss-dashboard
     ports:
-      - "3000:80"
+      - "8501:8501"
+    environment:
+      BACKEND_URL: ${BACKEND_URL:-http://backend:8080}
     depends_on:
       - backend
     networks:
