@@ -50,9 +50,9 @@ cp .env.example .env
 docker-compose up -d
 
 # 3. Access
-#    Dashboard:  http://localhost:3000
+#    Dashboard:  http://localhost:8501
 #    Backend:    http://localhost:8080/api/dashboard/summary
-#    ML Service: http://localhost:8000/health
+#    ML Service: http://localhost:8001/health
 #    InfluxDB:   http://localhost:8086
 ```
 
