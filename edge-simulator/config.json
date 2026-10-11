@@ -1,100 +1,80 @@
 {
-  "shelves": [
+  "active_tenants": ["demo-tenant", "pharma-corp", "chem-corp"],
+  "tenants": [
     {
-      "shelf_id": "shelf-01",
-      "zone": "dry-storage",
-      "product": { "item_id": "item-001", "name": "Basmati Rice 5kg", "category": "dry-goods", "full_weight_kg": 25.0, "unit": "kg" },
-      "depletion_rate_kg_per_hour": 0.12,
-      "temp_target_c": 22.0,
-      "humidity_target_pct": 45.0
+      "tenant_id": "demo-tenant",
+      "industry": "retail_grocery",
+      "locations": [
+        {
+          "location_id": "shelf-01",
+          "zone": "dry-storage",
+          "item_id": "item-001",
+          "item_name": "Basmati Rice 5kg",
+          "sensors": [
+            { "type": "weight", "target": 25.0, "unit": "kg", "depletion_rate": 0.12, "is_depleting": true },
+            { "type": "temperature", "target": 22.0, "unit": "°C", "noise": 0.2, "drift": 0.01 },
+            { "type": "humidity", "target": 45.0, "unit": "%", "noise": 1.0 }
+          ]
+        },
+        {
+          "location_id": "shelf-04",
+          "zone": "refrigerated",
+          "item_id": "item-004",
+          "item_name": "Whole Milk 1L",
+          "sensors": [
+            { "type": "weight", "target": 12.0, "unit": "kg", "depletion_rate": 0.25, "is_depleting": true },
+            { "type": "temperature", "target": 4.0, "unit": "°C", "noise": 0.15, "spike_prob": 0.01, "spike_mag": 4.0 },
+            { "type": "humidity", "target": 65.0, "unit": "%", "noise": 1.5 }
+          ]
+        },
+        {
+          "location_id": "shelf-07",
+          "zone": "frozen",
+          "item_id": "item-007",
+          "item_name": "Frozen Mixed Vegetables",
+          "sensors": [
+            { "type": "weight", "target": 18.0, "unit": "kg", "depletion_rate": 0.08, "is_depleting": true },
+            { "type": "temperature", "target": -18.0, "unit": "°C", "noise": 0.3, "spike_prob": 0.005, "spike_mag": 6.0 },
+            { "type": "humidity", "target": 50.0, "unit": "%", "noise": 1.0 }
+          ]
+        }
+      ]
     },
     {
-      "shelf_id": "shelf-02",
-      "zone": "dry-storage",
-      "product": { "item_id": "item-002", "name": "All-Purpose Flour 2kg", "category": "dry-goods", "full_weight_kg": 20.0, "unit": "kg" },
-      "depletion_rate_kg_per_hour": 0.08,
-      "temp_target_c": 22.0,
-      "humidity_target_pct": 40.0
+      "tenant_id": "pharma-corp",
+      "industry": "pharmaceutical",
+      "locations": [
+        {
+          "location_id": "cold-vault-01",
+          "zone": "biologics_storage",
+          "item_id": "pharma-vaccine-batch",
+          "item_name": "mRNA Vaccine Cold Vault",
+          "sensors": [
+            { "type": "temperature", "target": 3.8, "unit": "°C", "noise": 0.1, "drift": 0.02, "spike_prob": 0.01, "spike_mag": 3.0 },
+            { "type": "humidity", "target": 40.0, "unit": "%", "noise": 0.5 },
+            { "type": "vibration", "target": 0.05, "unit": "g", "noise": 0.02, "spike_prob": 0.02, "spike_mag": 0.8 },
+            { "type": "light", "target": 0.0, "unit": "lux", "noise": 0.0, "spike_prob": 0.01, "spike_mag": 250.0 }
+          ]
+        }
+      ]
     },
     {
-      "shelf_id": "shelf-03",
-      "zone": "dry-storage",
-      "product": { "item_id": "item-003", "name": "Granulated Sugar 1kg", "category": "dry-goods", "full_weight_kg": 15.0, "unit": "kg" },
-      "depletion_rate_kg_per_hour": 0.05,
-      "temp_target_c": 22.0,
-      "humidity_target_pct": 35.0
-    },
-    {
-      "shelf_id": "shelf-04",
-      "zone": "refrigerated",
-      "product": { "item_id": "item-004", "name": "Whole Milk 1L", "category": "dairy", "full_weight_kg": 12.0, "unit": "kg" },
-      "depletion_rate_kg_per_hour": 0.25,
-      "temp_target_c": 4.0,
-      "humidity_target_pct": 65.0
-    },
-    {
-      "shelf_id": "shelf-05",
-      "zone": "refrigerated",
-      "product": { "item_id": "item-005", "name": "Cheddar Cheese Block", "category": "dairy", "full_weight_kg": 8.0, "unit": "kg" },
-      "depletion_rate_kg_per_hour": 0.06,
-      "temp_target_c": 4.0,
-      "humidity_target_pct": 60.0
-    },
-    {
-      "shelf_id": "shelf-06",
-      "zone": "refrigerated",
-      "product": { "item_id": "item-006", "name": "Fresh Chicken Breast", "category": "meat", "full_weight_kg": 10.0, "unit": "kg" },
-      "depletion_rate_kg_per_hour": 0.18,
-      "temp_target_c": 2.0,
-      "humidity_target_pct": 70.0
-    },
-    {
-      "shelf_id": "shelf-07",
-      "zone": "frozen",
-      "product": { "item_id": "item-007", "name": "Frozen Mixed Vegetables", "category": "frozen", "full_weight_kg": 18.0, "unit": "kg" },
-      "depletion_rate_kg_per_hour": 0.04,
-      "temp_target_c": -18.0,
-      "humidity_target_pct": 50.0
-    },
-    {
-      "shelf_id": "shelf-08",
-      "zone": "frozen",
-      "product": { "item_id": "item-008", "name": "Ice Cream Tubs 500ml", "category": "frozen", "full_weight_kg": 14.0, "unit": "kg" },
-      "depletion_rate_kg_per_hour": 0.07,
-      "temp_target_c": -20.0,
-      "humidity_target_pct": 45.0
-    },
-    {
-      "shelf_id": "shelf-09",
-      "zone": "dry-storage",
-      "product": { "item_id": "item-009", "name": "Olive Oil 500ml Bottles", "category": "condiments", "full_weight_kg": 12.0, "unit": "kg" },
-      "depletion_rate_kg_per_hour": 0.03,
-      "temp_target_c": 22.0,
-      "humidity_target_pct": 40.0
-    },
-    {
-      "shelf_id": "shelf-10",
-      "zone": "refrigerated",
-      "product": { "item_id": "item-010", "name": "Fresh Orange Juice 1L", "category": "beverages", "full_weight_kg": 16.0, "unit": "kg" },
-      "depletion_rate_kg_per_hour": 0.20,
-      "temp_target_c": 4.0,
-      "humidity_target_pct": 55.0
-    },
-    {
-      "shelf_id": "shelf-11",
-      "zone": "dry-storage",
-      "product": { "item_id": "item-011", "name": "Canned Tomatoes 400g", "category": "canned", "full_weight_kg": 20.0, "unit": "kg" },
-      "depletion_rate_kg_per_hour": 0.06,
-      "temp_target_c": 22.0,
-      "humidity_target_pct": 42.0
-    },
-    {
-      "shelf_id": "shelf-12",
-      "zone": "dry-storage",
-      "product": { "item_id": "item-012", "name": "Penne Pasta 500g", "category": "dry-goods", "full_weight_kg": 18.0, "unit": "kg" },
-      "depletion_rate_kg_per_hour": 0.09,
-      "temp_target_c": 22.0,
-      "humidity_target_pct": 38.0
+      "tenant_id": "chem-corp",
+      "industry": "chemical_manufacturing",
+      "locations": [
+        {
+          "location_id": "reactor-tank-03",
+          "zone": "synthesis_unit",
+          "item_id": "chem-acid-tank",
+          "item_name": "Sulfuric Synthesis Tank",
+          "sensors": [
+            { "type": "pressure", "target": 45.0, "unit": "psi", "noise": 0.8, "drift": 0.05, "spike_prob": 0.01, "spike_mag": 15.0 },
+            { "type": "ph", "target": 2.1, "unit": "pH", "noise": 0.05, "drift": 0.005 },
+            { "type": "temperature", "target": 65.0, "unit": "°C", "noise": 0.5 },
+            { "type": "gas_level", "target": 12.0, "unit": "ppm", "noise": 0.4, "spike_prob": 0.01, "spike_mag": 10.0 }
+          ]
+        }
+      ]
     }
   ]
 }

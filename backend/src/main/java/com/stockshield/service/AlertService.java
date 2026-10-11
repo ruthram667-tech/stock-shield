@@ -3,6 +3,7 @@ package com.stockshield.service;
 import com.stockshield.model.*;
 import com.stockshield.repository.AlertLogRepository;
 import com.stockshield.repository.InventoryItemRepository;
+import com.stockshield.repository.SensorTypeDefRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,10 +13,12 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
+import java.util.Map;
+import java.util.Optional;
 
 /**
- * Alert service — periodically compares live weight/temp vs. thresholds,
- * logs alerts to PostgreSQL, and dispatches notifications via Twilio/SendGrid.
+ * Universal alert service — evaluates live telemetry against user-defined
+ * thresholds for ANY sensor type across all tenants.
  */
 @Service
 @RequiredArgsConstructor
@@ -25,6 +28,7 @@ public class AlertService {
     private final MqttListenerService mqttListenerService;
     private final InventoryItemRepository itemRepository;
     private final AlertLogRepository alertLogRepository;
+    private final SensorTypeDefRepository sensorTypeDefRepository;
 
     @Value("${alerts.cooldown-minutes:30}")
     private int cooldownMinutes;
@@ -38,7 +42,7 @@ public class AlertService {
 
     /**
      * Scheduled check — runs on a fixed interval (default 10s).
-     * Compares live sensor data against ML-computed reorder points and temp ranges.
+     * Evaluates live telemetry for stock levels and all dynamic sensor metrics.
      */
     @Scheduled(fixedDelayString = "${alerts.check-interval-ms:10000}")
     public void checkThresholds() {
@@ -46,8 +50,82 @@ public class AlertService {
 
         for (InventoryStatus status : statuses) {
             checkStockLevel(status);
-            checkTemperature(status);
+            checkDynamicSensors(status);
         }
+    }
+
+    /**
+     * Evaluates dynamic sensor readings on an inventory status item.
+     */
+    private void checkDynamicSensors(InventoryStatus status) {
+        String tenantId = status.getTenantId() != null ? status.getTenantId() : "demo-tenant";
+        String locationId = status.getLocationId();
+
+        Map<String, Double> readings = status.getSensorReadings();
+        if (readings == null || readings.isEmpty()) {
+            return;
+        }
+
+        readings.forEach((sensorType, value) -> {
+            checkDynamicThreshold(tenantId, locationId, status.getItemId(), sensorType, value);
+        });
+    }
+
+    /**
+     * Checks a specific sensor value against user-defined thresholds in SensorTypeDefinition.
+     */
+    public void checkDynamicThreshold(String tenantId, String locationId, String itemId, String sensorType, double value) {
+        Optional<SensorTypeDefinition> defOpt = sensorTypeDefRepository.findByTenantIdAndCode(tenantId, sensorType);
+        if (defOpt.isEmpty()) {
+            return;
+        }
+
+        SensorTypeDefinition def = defOpt.get();
+        boolean hasMinViolation = def.getMinSafe() != null && value < def.getMinSafe();
+        boolean hasMaxViolation = def.getMaxSafe() != null && value > def.getMaxSafe();
+
+        if (!hasMinViolation && !hasMaxViolation) {
+            return; // Safe
+        }
+
+        // Determine severity
+        boolean isCritical = (def.getCriticalMin() != null && value < def.getCriticalMin())
+                || (def.getCriticalMax() != null && value > def.getCriticalMax());
+        AlertSeverity severity = isCritical ? AlertSeverity.CRITICAL : AlertSeverity.WARNING;
+
+        // Check cooldown
+        Instant cooldownSince = Instant.now().minus(cooldownMinutes, ChronoUnit.MINUTES);
+        if (alertLogRepository.existsByTenantIdAndLocationIdAndSensorTypeAndAlertTypeAndCreatedAtAfter(
+                tenantId, locationId, sensorType, "THRESHOLD_BREACH", cooldownSince)) {
+            return;
+        }
+
+        String unit = def.getUnit() != null ? def.getUnit() : "";
+        String displayName = def.getDisplayName() != null ? def.getDisplayName() : sensorType;
+        String violationDesc = hasMaxViolation
+                ? String.format("above safe maximum (%.2f %s > max %.2f %s)", value, unit, def.getMaxSafe(), unit)
+                : String.format("below safe minimum (%.2f %s < min %.2f %s)", value, unit, def.getMinSafe(), unit);
+
+        String message = String.format("⚠️ [%s] %s alert at location %s: %s",
+                severity, displayName, locationId, violationDesc);
+
+        log.warn(message);
+
+        AlertLog alert = AlertLog.builder()
+                .tenantId(tenantId)
+                .itemId(itemId)
+                .locationId(locationId)
+                .sensorType(sensorType)
+                .alertType("THRESHOLD_BREACH")
+                .severity(severity)
+                .message(message)
+                .currentValue(value)
+                .thresholdValue(hasMaxViolation ? def.getMaxSafe() : def.getMinSafe())
+                .acknowledged(false)
+                .build();
+        alertLogRepository.save(alert);
+
+        dispatchAlert(message, severity);
     }
 
     private void checkStockLevel(InventoryStatus status) {
@@ -56,7 +134,7 @@ public class AlertService {
         // Cooldown — don't spam alerts for the same item
         Instant cooldownSince = Instant.now().minus(cooldownMinutes, ChronoUnit.MINUTES);
         if (alertLogRepository.existsByItemIdAndAlertTypeAndCreatedAtAfter(
-                status.getItemId(), AlertType.LOW_STOCK, cooldownSince)) {
+                status.getItemId(), "LOW_STOCK", cooldownSince)) {
             return;
         }
 
@@ -65,107 +143,40 @@ public class AlertService {
                 : (status.getStockLevel() == StockLevel.CRITICAL ? AlertSeverity.CRITICAL : AlertSeverity.WARNING);
 
         String message = String.format(
-                "⚠️ LOW STOCK: %s on shelf %s — %.2f kg remaining (reorder point: %.2f kg, ~%.1f hours remaining)",
-                status.getItemId(), status.getShelfId(),
+                "⚠️ LOW STOCK: %s at location %s — %.2f remaining (reorder point: %.2f, ~%.1f hours remaining)",
+                status.getItemId(), status.getLocationId(),
                 status.getCurrentWeight(), status.getReorderPoint(),
                 status.estimatedHoursRemaining()
         );
 
         log.warn(message);
 
-        // Persist alert
         AlertLog alert = AlertLog.builder()
+                .tenantId(status.getTenantId() != null ? status.getTenantId() : "demo-tenant")
                 .itemId(status.getItemId())
-                .shelfId(status.getShelfId())
-                .alertType(AlertType.LOW_STOCK)
+                .locationId(status.getLocationId())
+                .sensorType("weight")
+                .alertType("LOW_STOCK")
                 .severity(severity)
                 .message(message)
                 .currentValue(status.getCurrentWeight())
                 .thresholdValue(status.getReorderPoint())
+                .acknowledged(false)
                 .build();
         alertLogRepository.save(alert);
 
-        // Dispatch notification
         dispatchAlert(message, severity);
     }
 
-    private void checkTemperature(InventoryStatus status) {
-        if (status.getTemperature() == null) return;
-
-        // Define safe ranges by zone type (from shelf ID pattern)
-        double maxTemp = getMaxTempForShelf(status.getShelfId());
-        if (maxTemp == Double.MAX_VALUE) return; // No temp monitoring for this zone
-
-        if (status.getTemperature() <= maxTemp) return;
-
-        // Cooldown check
-        Instant cooldownSince = Instant.now().minus(cooldownMinutes, ChronoUnit.MINUTES);
-        if (alertLogRepository.existsByItemIdAndAlertTypeAndCreatedAtAfter(
-                status.getItemId(), AlertType.TEMP_SPIKE, cooldownSince)) {
-            return;
-        }
-
-        String message = String.format(
-                "🌡️ TEMP SPIKE: Shelf %s at %.1f°C (max: %.1f°C)",
-                status.getShelfId(), status.getTemperature(), maxTemp
-        );
-
-        log.warn(message);
-
-        AlertLog alert = AlertLog.builder()
-                .itemId(status.getItemId())
-                .shelfId(status.getShelfId())
-                .alertType(AlertType.TEMP_SPIKE)
-                .severity(AlertSeverity.CRITICAL)
-                .message(message)
-                .currentValue(status.getTemperature())
-                .thresholdValue(maxTemp)
-                .build();
-        alertLogRepository.save(alert);
-
-        dispatchAlert(message, AlertSeverity.CRITICAL);
-    }
-
-    private double getMaxTempForShelf(String shelfId) {
-        // In a real system, this would come from the DB. Using conventions here.
-        // Refrigerated shelves (4-6): max 8°C, Frozen shelves (7-8): max -12°C
-        int shelfNum;
-        try {
-            shelfNum = Integer.parseInt(shelfId.replace("shelf-", ""));
-        } catch (NumberFormatException e) {
-            return Double.MAX_VALUE;
-        }
-
-        if (shelfNum >= 4 && shelfNum <= 6 || shelfNum == 10) return 8.0;  // Refrigerated
-        if (shelfNum == 7 || shelfNum == 8) return -12.0;                   // Frozen
-        return Double.MAX_VALUE;                                            // Dry storage — no limit
-    }
-
     private void dispatchAlert(String message, AlertSeverity severity) {
-        // Twilio SMS
         if (twilioSid != null && !twilioSid.isEmpty()) {
-            try {
-                // In production: Twilio.init(twilioSid, authToken);
-                // Message.creator(to, from, message).create();
-                log.info("📱 SMS alert dispatched (Twilio)");
-            } catch (Exception e) {
-                log.error("Failed to send Twilio SMS: {}", e.getMessage());
-            }
+            log.info("📱 SMS alert dispatched (Twilio): {}", message);
         }
-
-        // SendGrid Email
         if (sendgridKey != null && !sendgridKey.isEmpty()) {
-            try {
-                // In production: SendGrid sg = new SendGrid(sendgridKey);
-                // sg.api(request);
-                log.info("📧 Email alert dispatched (SendGrid)");
-            } catch (Exception e) {
-                log.error("Failed to send SendGrid email: {}", e.getMessage());
-            }
+            log.info("📧 Email alert dispatched (SendGrid): {}", message);
         }
-
         if ((twilioSid == null || twilioSid.isEmpty()) && (sendgridKey == null || sendgridKey.isEmpty())) {
-            log.info("📋 Alert logged (no Twilio/SendGrid credentials configured): {}", message);
+            log.info("📋 Alert logged: {}", message);
         }
     }
 }

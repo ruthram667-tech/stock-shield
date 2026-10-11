@@ -13,8 +13,10 @@ import java.time.Instant;
 @Builder
 public class InventoryItemResponse {
     private String id;
+    private String tenantId;
     private String name;
     private String category;
+    private String locationId;
     private String shelfId;
     private String zone;
     private double currentWeight;

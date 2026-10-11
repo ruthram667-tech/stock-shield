@@ -5,8 +5,9 @@ import lombok.*;
 import java.time.Instant;
 
 /**
- * Represents a physical sensor attached to a shelf.
- * Maps to HX711 (weight) or DHT22 (temperature/humidity) hardware.
+ * Represents a physical sensor device at a location.
+ * Now supports any sensor type via tenant-defined sensor_type_code
+ * instead of the old hardcoded SensorType enum.
  */
 @Entity
 @Table(name = "sensors")
@@ -19,12 +20,15 @@ public class Sensor {
     @Column(length = 100)
     private String id;
 
-    @Column(name = "shelf_id", nullable = false, length = 50)
-    private String shelfId;
+    @Column(name = "tenant_id", length = 36)
+    private String tenantId;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "sensor_type", nullable = false)
-    private SensorType sensorType;
+    @Column(name = "location_id", nullable = false, length = 50)
+    private String locationId;
+
+    /** Dynamic sensor type code — references sensor_type_definitions.code */
+    @Column(name = "sensor_type_code", length = 50)
+    private String sensorTypeCode;
 
     @Column(name = "last_reading")
     private Double lastReading;

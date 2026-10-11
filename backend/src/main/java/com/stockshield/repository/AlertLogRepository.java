@@ -1,7 +1,6 @@
 package com.stockshield.repository;
 
 import com.stockshield.model.AlertLog;
-import com.stockshield.model.AlertType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -22,8 +21,20 @@ public interface AlertLogRepository extends JpaRepository<AlertLog, Long> {
 
     long countByAcknowledgedFalse();
 
+    // ── Tenant-aware queries ──
+
+    List<AlertLog> findByTenantIdOrderByCreatedAtDesc(String tenantId, Pageable pageable);
+
+    long countByTenantIdAndAcknowledgedFalse(String tenantId);
+
     /**
-     * Check if an alert of a given type was recently fired for an item (cooldown check).
+     * Cooldown check: has an alert of this type been fired recently for this location + sensor?
      */
-    boolean existsByItemIdAndAlertTypeAndCreatedAtAfter(String itemId, AlertType alertType, Instant since);
+    boolean existsByTenantIdAndLocationIdAndSensorTypeAndAlertTypeAndCreatedAtAfter(
+            String tenantId, String locationId, String sensorType, String alertType, Instant since);
+
+    /**
+     * Legacy cooldown check (kept for backward compatibility).
+     */
+    boolean existsByItemIdAndAlertTypeAndCreatedAtAfter(String itemId, String alertType, Instant since);
 }

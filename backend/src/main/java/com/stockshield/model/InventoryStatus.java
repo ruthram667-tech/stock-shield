@@ -1,6 +1,8 @@
 package com.stockshield.model;
 
 import java.time.Instant;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import lombok.*;
 
@@ -8,14 +10,17 @@ import lombok.*;
  * In-memory status record for an inventory item.
  * Maintained in a HashMap for O(1) lookup by the MQTT listener.
  * NOT persisted to database — computed from live sensor data.
+ *
+ * Now supports dynamic sensor readings beyond just temperature/humidity.
  */
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
 public class InventoryStatus {
 
+    private String tenantId;
     private String itemId;
-    private String shelfId;
+    private String locationId;
     private double currentWeight;
     private double fullWeight;
     private double reorderPoint;
@@ -23,10 +28,19 @@ public class InventoryStatus {
     private Instant lastUpdated;
     private StockLevel stockLevel;
 
-    // Environment readings for the shelf
-    private Double temperature;
-    private Double humidity;
-    private Instant lastEnvironmentUpdate;
+    /**
+     * Dynamic sensor readings map: sensorType → latest value.
+     * Instead of hardcoded temperature/humidity fields, any sensor type
+     * can be stored here (e.g., "temperature" → 4.2, "pressure" → 101.3, "ph" → 7.1).
+     */
+    @Builder.Default
+    private Map<String, Double> sensorReadings = new ConcurrentHashMap<>();
+
+    /**
+     * Timestamps for each sensor type's last reading.
+     */
+    @Builder.Default
+    private Map<String, Instant> sensorTimestamps = new ConcurrentHashMap<>();
 
     /**
      * Recalculates status fields based on a new weight reading.
@@ -53,12 +67,31 @@ public class InventoryStatus {
     }
 
     /**
-     * Updates environment readings.
+     * Updates a dynamic sensor reading (works for any sensor type).
      */
-    public void updateEnvironment(double temp, double humidity) {
-        this.temperature = temp;
-        this.humidity = humidity;
-        this.lastEnvironmentUpdate = Instant.now();
+    public void updateSensorReading(String sensorType, double value) {
+        if (sensorReadings == null) sensorReadings = new ConcurrentHashMap<>();
+        if (sensorTimestamps == null) sensorTimestamps = new ConcurrentHashMap<>();
+        sensorReadings.put(sensorType, value);
+        sensorTimestamps.put(sensorType, Instant.now());
+    }
+
+    /**
+     * Gets the latest reading for a sensor type (returns null if not present).
+     */
+    public Double getSensorReading(String sensorType) {
+        if (sensorReadings == null) return null;
+        return sensorReadings.get(sensorType);
+    }
+
+    // ── Convenience accessors for common types (backward compatibility) ──
+
+    public Double getTemperature() {
+        return getSensorReading("temperature");
+    }
+
+    public Double getHumidity() {
+        return getSensorReading("humidity");
     }
 
     /**

@@ -4,6 +4,10 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.time.Instant;
 
+/**
+ * Alert log entity — now tenant-aware with dynamic sensor type context.
+ * Stores alerts for any sensor type (not just LOW_STOCK and TEMP_SPIKE).
+ */
 @Entity
 @Table(name = "alert_log")
 @Getter @Setter
@@ -15,15 +19,22 @@ public class AlertLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "tenant_id", length = 36)
+    private String tenantId;
+
     @Column(name = "item_id", length = 50)
     private String itemId;
 
-    @Column(name = "shelf_id", nullable = false, length = 50)
-    private String shelfId;
+    @Column(name = "location_id", nullable = false, length = 50)
+    private String locationId;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "alert_type", nullable = false)
-    private AlertType alertType;
+    /** Dynamic alert type: "LOW_STOCK", "THRESHOLD_BREACH", "SENSOR_OFFLINE", etc. */
+    @Column(name = "alert_type", nullable = false, length = 50)
+    private String alertType;
+
+    /** Which sensor type triggered this alert (e.g., "temperature", "pressure") */
+    @Column(name = "sensor_type", length = 50)
+    private String sensorType;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

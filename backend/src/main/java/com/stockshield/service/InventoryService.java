@@ -67,9 +67,11 @@ public class InventoryService {
 
         InventoryItemResponse.InventoryItemResponseBuilder builder = InventoryItemResponse.builder()
                 .id(item.getId())
+                .tenantId(item.getTenantId())
                 .name(item.getName())
                 .category(item.getCategory())
-                .shelfId(item.getShelfId())
+                .locationId(item.getLocationId())
+                .shelfId(item.getLocationId())
                 .zone(item.getZone())
                 .fullWeight(item.getFullWeight())
                 .reorderPoint(item.getReorderPoint())

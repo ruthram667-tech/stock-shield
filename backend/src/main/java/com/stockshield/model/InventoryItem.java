@@ -5,8 +5,8 @@ import lombok.*;
 import java.time.Instant;
 
 /**
- * Represents a product tracked on a shelf.
- * Weight is updated in real-time from HX711 load cell readings.
+ * Represents a product/asset tracked at a location.
+ * Now tenant-aware and uses generic location_id instead of shelf_id.
  */
 @Entity
 @Table(name = "inventory_items")
@@ -19,14 +19,17 @@ public class InventoryItem {
     @Column(length = 50)
     private String id;
 
+    @Column(name = "tenant_id", length = 36)
+    private String tenantId;
+
     @Column(nullable = false)
     private String name;
 
     @Column(nullable = false, length = 100)
     private String category;
 
-    @Column(name = "shelf_id", nullable = false, length = 50)
-    private String shelfId;
+    @Column(name = "location_id", nullable = false, length = 50)
+    private String locationId;
 
     @Column(name = "current_weight", nullable = false)
     private Double currentWeight;
@@ -51,6 +54,15 @@ public class InventoryItem {
 
     @Column(name = "updated_at")
     private Instant updatedAt;
+
+    /** Backward-compatible getter for locationId */
+    public String getShelfId() {
+        return locationId;
+    }
+
+    public void setShelfId(String shelfId) {
+        this.locationId = shelfId;
+    }
 
     /**
      * Returns stock as a percentage of full weight (0.0 to 1.0).

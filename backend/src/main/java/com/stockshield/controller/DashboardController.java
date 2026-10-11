@@ -23,11 +23,14 @@ public class DashboardController {
     private final SensorRepository sensorRepository;
 
     /**
-     * Aggregated summary for dashboard cards.
+     * Aggregated summary for dashboard cards, optionally filtered by tenant.
      */
     @GetMapping("/summary")
-    public ResponseEntity<DashboardSummary> getSummary() {
-        Collection<InventoryStatus> statuses = mqttListenerService.getAllStatuses();
+    public ResponseEntity<DashboardSummary> getSummary(
+            @RequestParam(required = false) String tenantId) {
+        Collection<InventoryStatus> statuses = (tenantId != null && !tenantId.isBlank())
+                ? mqttListenerService.getStatusesByTenant(tenantId)
+                : mqttListenerService.getAllStatuses();
 
         int totalItems = statuses.size();
         int lowStock = 0;
@@ -54,7 +57,10 @@ public class DashboardController {
             }
         }
 
-        long activeAlerts = alertLogRepository.countByAcknowledgedFalse();
+        long activeAlerts = (tenantId != null && !tenantId.isBlank())
+                ? alertLogRepository.countByTenantIdAndAcknowledgedFalse(tenantId)
+                : alertLogRepository.countByAcknowledgedFalse();
+
         long sensorsOnline = sensorRepository.countByStatus(SensorStatus.ONLINE);
         long sensorsOffline = sensorRepository.countByStatus(SensorStatus.OFFLINE);
 
@@ -73,11 +79,16 @@ public class DashboardController {
     }
 
     /**
-     * Recent alerts for the dashboard feed.
+     * Recent alerts for the dashboard feed, optionally filtered by tenant.
      */
     @GetMapping("/alerts/recent")
     public ResponseEntity<List<AlertLog>> getRecentAlerts(
+            @RequestParam(required = false) String tenantId,
             @RequestParam(defaultValue = "20") int limit) {
+        if (tenantId != null && !tenantId.isBlank()) {
+            return ResponseEntity.ok(
+                    alertLogRepository.findByTenantIdOrderByCreatedAtDesc(tenantId, PageRequest.of(0, limit)));
+        }
         return ResponseEntity.ok(
                 alertLogRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(0, limit)));
     }

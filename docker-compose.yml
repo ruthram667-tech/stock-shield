@@ -141,6 +141,8 @@ services:
       ML_RETRAIN_INTERVAL_HOURS: ${ML_RETRAIN_INTERVAL_HOURS:-6}
       ML_DEFAULT_LEAD_TIME_DAYS: ${ML_DEFAULT_LEAD_TIME_DAYS:-3}
       ML_DEFAULT_SERVICE_LEVEL: ${ML_DEFAULT_SERVICE_LEVEL:-0.95}
+    volumes:
+      - ml-models-data:/app/models
     depends_on:
       influxdb:
         condition: service_healthy
@@ -150,7 +152,7 @@ services:
       - ss-net
 
   # ═══════════════════════════════════════════════
-  # React Dashboard
+  # Streamlit Dashboard
   # ═══════════════════════════════════════════════
 
   dashboard:
@@ -162,8 +164,10 @@ services:
       - "8501:8501"
     environment:
       BACKEND_URL: ${BACKEND_URL:-http://backend:8080}
+      ML_URL: ${ML_URL:-http://ml-service:8000}
     depends_on:
       - backend
+      - ml-service
     networks:
       - ss-net
 
@@ -172,6 +176,7 @@ volumes:
   mosquitto-log:
   postgres-data:
   influxdb-data:
+  ml-models-data:
 
 networks:
   ss-net:

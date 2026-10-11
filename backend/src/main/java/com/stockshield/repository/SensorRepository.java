@@ -10,9 +10,13 @@ import java.util.List;
 @Repository
 public interface SensorRepository extends JpaRepository<Sensor, String> {
 
-    List<Sensor> findByShelfId(String shelfId);
-
-    List<Sensor> findByStatus(SensorStatus status);
-
     long countByStatus(SensorStatus status);
+
+    List<Sensor> findByLocationId(String locationId);
+
+    List<Sensor> findByTenantId(String tenantId);
+
+    List<Sensor> findByTenantIdAndSensorTypeCode(String tenantId, String sensorTypeCode);
+
+    long countByTenantIdAndStatus(String tenantId, SensorStatus status);
 }

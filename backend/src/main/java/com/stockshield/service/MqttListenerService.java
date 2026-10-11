@@ -5,7 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stockshield.model.InventoryItem;
 import com.stockshield.model.InventoryStatus;
 import com.stockshield.model.Sensor;
-import com.stockshield.model.SensorType;
+import com.stockshield.model.SensorStatus;
+import com.stockshield.model.StockLevel;
 import com.stockshield.repository.InventoryItemRepository;
 import com.stockshield.repository.SensorRepository;
 import com.stockshield.repository.TelemetryRepository;
@@ -23,8 +24,11 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Core MQTT listener service — runs in its own thread, subscribes to
- * sensor topics, and maintains an in-memory HashMap for O(1) status lookups.
+ * Generic MQTT listener service — handles messages from ANY sensor type
+ * for ANY tenant. Routes data to InfluxDB, alerts, and WebSocket.
+ *
+ * Topic format: stockshield/{tenantId}/{locationId}/{sensorType}
+ * Legacy format: stockshield/shelf/{shelfId}/{type} (still supported)
  */
 @Service
 @RequiredArgsConstructor
@@ -40,6 +44,9 @@ public class MqttListenerService implements MqttCallback {
 
     @Value("${mqtt.qos:1}")
     private int qos;
+
+    @Value("${mqtt.topics.generic}")
+    private String genericTopic;
 
     @Value("${mqtt.topics.weight}")
     private String weightTopic;
@@ -62,24 +69,29 @@ public class MqttListenerService implements MqttCallback {
         List<InventoryItem> items = itemRepository.findAll();
         for (InventoryItem item : items) {
             statusMap.put(item.getId(), InventoryStatus.builder()
+                    .tenantId(item.getTenantId())
                     .itemId(item.getId())
-                    .shelfId(item.getShelfId())
+                    .locationId(item.getLocationId())
                     .currentWeight(item.getCurrentWeight())
                     .fullWeight(item.getFullWeight())
                     .reorderPoint(item.getReorderPoint())
                     .depletionRate(0.0)
                     .lastUpdated(Instant.now())
                     .stockLevel(item.getStockLevel())
+                    .sensorReadings(new ConcurrentHashMap<>())
+                    .sensorTimestamps(new ConcurrentHashMap<>())
                     .build());
         }
         log.info("📊 Pre-populated status map with {} items", statusMap.size());
 
-        // Subscribe to MQTT topics
+        // Subscribe to MQTT topics (both generic and legacy)
         try {
             mqttClient.setCallback(this);
-            mqttClient.subscribe(new String[]{weightTopic, environmentTopic, statusTopic},
-                                 new int[]{qos, qos, 0});
-            log.info("📡 Subscribed to MQTT topics: {}, {}, {}", weightTopic, environmentTopic, statusTopic);
+            mqttClient.subscribe(
+                    new String[]{genericTopic, weightTopic, environmentTopic, statusTopic},
+                    new int[]{qos, qos, qos, 0});
+            log.info("📡 Subscribed to MQTT topics: {}, {}, {}, {}",
+                    genericTopic, weightTopic, environmentTopic, statusTopic);
         } catch (MqttException e) {
             log.error("Failed to subscribe to MQTT topics", e);
         }
@@ -109,10 +121,15 @@ public class MqttListenerService implements MqttCallback {
             String payload = new String(message.getPayload());
             JsonNode json = objectMapper.readTree(payload);
 
-            if (topic.contains("/weight")) {
-                handleWeightMessage(json);
+            // Route based on message content (generic format)
+            if (json.has("tenantId") && json.has("sensorType")) {
+                handleGenericMessage(json);
+            }
+            // Legacy format routing
+            else if (topic.contains("/weight")) {
+                handleLegacyWeightMessage(json);
             } else if (topic.contains("/environment")) {
-                handleEnvironmentMessage(json);
+                handleLegacyEnvironmentMessage(json);
             } else if (topic.contains("/status")) {
                 handleStatusMessage(json);
             }
@@ -126,64 +143,114 @@ public class MqttListenerService implements MqttCallback {
         // Not publishing from backend
     }
 
-    // ─── Message Handlers ───────────────────────────────────────────────────
+    // ─── Generic Message Handler (works for ANY sensor type) ────────────────
 
-    private void handleWeightMessage(JsonNode json) {
-        String shelfId = json.get("shelfId").asText();
+    private void handleGenericMessage(JsonNode json) {
+        String tenantId = json.get("tenantId").asText();
+        String locationId = json.get("locationId").asText();
+        String sensorType = json.get("sensorType").asText();
+        double value = json.get("value").asDouble();
+
+        // 1. Write to InfluxDB
+        if ("weight".equals(sensorType) && json.has("itemId")) {
+            String itemId = json.get("itemId").asText();
+            telemetryRepository.writeWeight(tenantId, locationId, itemId, value);
+
+            // Update in-memory status for weight
+            InventoryStatus status = statusMap.get(itemId);
+            if (status != null) {
+                status.recalculate(value);
+                messagingTemplate.convertAndSend("/topic/inventory/" + itemId, status);
+            }
+        } else {
+            telemetryRepository.writeGeneric(tenantId, locationId, sensorType, value);
+        }
+
+        // 2. Update sensor readings in status map for matching locations
+        statusMap.values().stream()
+                .filter(s -> s.getLocationId().equals(locationId)
+                        && tenantId.equals(s.getTenantId()))
+                .forEach(status -> {
+                    status.updateSensorReading(sensorType, value);
+                    messagingTemplate.convertAndSend(
+                            "/topic/" + tenantId + "/" + locationId + "/" + sensorType,
+                            Map.of("sensorType", sensorType, "value", value,
+                                   "locationId", locationId, "tenantId", tenantId));
+                });
+
+        // 3. Update sensor record in DB
+        String sensorId = sensorType + "-" + locationId;
+        updateSensor(sensorId, tenantId, locationId, sensorType, value);
+    }
+
+    // ─── Legacy Message Handlers (backward compatible) ──────────────────────
+
+    private void handleLegacyWeightMessage(JsonNode json) {
+        String locationId = json.get("shelfId").asText();
         String itemId = json.get("itemId").asText();
         double weight = json.get("value").asDouble();
 
-        // Update in-memory status
         InventoryStatus status = statusMap.get(itemId);
         if (status != null) {
             status.recalculate(weight);
-
-            // Push real-time update to WebSocket subscribers
             messagingTemplate.convertAndSend("/topic/inventory/" + itemId, status);
         } else {
             log.warn("Received weight for unknown item: {}", itemId);
         }
 
-        // Write to InfluxDB (async — offloaded from callback)
-        telemetryRepository.writeWeight(shelfId, itemId, weight);
-
-        // Update sensor status
-        updateSensor("hx711-" + shelfId, shelfId, SensorType.WEIGHT, weight);
+        telemetryRepository.writeWeight(locationId, itemId, weight);
+        updateSensor("hx711-" + locationId, "demo-tenant", locationId, "weight", weight);
     }
 
-    private void handleEnvironmentMessage(JsonNode json) {
-        String shelfId = json.get("shelfId").asText();
+    private void handleLegacyEnvironmentMessage(JsonNode json) {
+        String locationId = json.get("shelfId").asText();
         double temp = json.get("temp").asDouble();
         double humidity = json.get("humidity").asDouble();
 
-        // Find the item on this shelf and update environment
         statusMap.values().stream()
-                .filter(s -> s.getShelfId().equals(shelfId))
+                .filter(s -> s.getLocationId().equals(locationId))
                 .findFirst()
                 .ifPresent(status -> {
-                    status.updateEnvironment(temp, humidity);
-                    messagingTemplate.convertAndSend("/topic/environment/" + shelfId, status);
+                    status.updateSensorReading("temperature", temp);
+                    status.updateSensorReading("humidity", humidity);
+                    messagingTemplate.convertAndSend("/topic/environment/" + locationId, status);
                 });
 
-        // Write to InfluxDB
-        telemetryRepository.writeEnvironment(shelfId, temp, humidity);
-
-        // Update sensor
-        updateSensor("dht22-" + shelfId, shelfId, SensorType.TEMPERATURE, temp);
+        telemetryRepository.writeEnvironment(locationId, temp, humidity);
+        updateSensor("dht22-" + locationId, "demo-tenant", locationId, "temperature", temp);
     }
 
     private void handleStatusMessage(JsonNode json) {
-        String shelfId = json.get("shelfId").asText();
+        String locationId = json.get("shelfId").asText();
         int battery = json.get("battery").asInt();
         int rssi = json.get("rssi").asInt();
-        log.debug("Device status — shelf: {}, battery: {}%, rssi: {}dBm", shelfId, battery, rssi);
+        log.debug("Device status — location: {}, battery: {}%, rssi: {}dBm",
+                locationId, battery, rssi);
     }
 
-    private void updateSensor(String sensorId, String shelfId, SensorType type, double value) {
-        sensorRepository.findById(sensorId).ifPresent(sensor -> {
-            sensor.updateReading(value, Instant.now());
-            sensorRepository.save(sensor);
-        });
+    private void updateSensor(String sensorId, String tenantId, String locationId,
+                               String sensorType, double value) {
+        sensorRepository.findById(sensorId).ifPresentOrElse(
+                sensor -> {
+                    sensor.updateReading(value, Instant.now());
+                    sensorRepository.save(sensor);
+                },
+                () -> {
+                    // Auto-register new sensor
+                    Sensor sensor = Sensor.builder()
+                            .id(sensorId)
+                            .tenantId(tenantId)
+                            .locationId(locationId)
+                            .sensorTypeCode(sensorType)
+                            .lastReading(value)
+                            .lastSeen(Instant.now())
+                            .status(SensorStatus.ONLINE)
+                            .build();
+                    sensorRepository.save(sensor);
+                    log.info("📡 Auto-registered new sensor: {} ({} at {})",
+                            sensorId, sensorType, locationId);
+                }
+        );
     }
 
     // ─── Public API ─────────────────────────────────────────────────────────
@@ -200,6 +267,15 @@ public class MqttListenerService implements MqttCallback {
      */
     public Collection<InventoryStatus> getAllStatuses() {
         return statusMap.values();
+    }
+
+    /**
+     * Returns statuses for a specific tenant.
+     */
+    public Collection<InventoryStatus> getStatusesByTenant(String tenantId) {
+        return statusMap.values().stream()
+                .filter(s -> tenantId.equals(s.getTenantId()))
+                .toList();
     }
 
     /**

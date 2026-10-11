@@ -43,6 +43,9 @@ mqtt:
   client-id: ${MQTT_CLIENT_ID:stockshield-backend}
   qos: 1
   topics:
+    # Generic topic — matches ANY tenant/location/sensorType
+    generic: stockshield/+/+/+
+    # Legacy topics (backward compatibility with old simulators)
     weight: stockshield/shelf/+/weight
     environment: stockshield/shelf/+/environment
     status: stockshield/shelf/+/status
@@ -60,6 +63,10 @@ alerts:
     api-key: ${SENDGRID_API_KEY:}
     from-email: ${SENDGRID_FROM_EMAIL:alerts@stockshield.local}
     to-email: ${ALERT_EMAIL:admin@stockshield.local}
+
+# ─── Multi-Tenancy ───
+stockshield:
+  default-tenant-id: ${DEFAULT_TENANT_ID:demo-tenant}
 
 # ─── Logging ───
 logging:
