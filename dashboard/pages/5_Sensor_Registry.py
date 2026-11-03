@@ -6,6 +6,7 @@ from utils.ui_theme import (
     header_banner,
     sidebar_tenant_card,
     section_header,
+    render_breadcrumbs,
     badge,
 )
 
@@ -24,7 +25,9 @@ sidebar_tenant_card(
     industry=selected_tenant.get('industry', 'universal'),
 )
 
-# ─── Header ───────────────────────────────────────────────────────────────────
+# ─── Breadcrumbs & Header ─────────────────────────────────────────────────────
+render_breadcrumbs(["🛡️ StockShield", selected_tenant.get('name', 'Universal IoT'), "⚙️ Sensor Registry"])
+
 header_banner(
     title="Dynamic Sensor Type Registry",
     tenant_name=selected_tenant.get('name', 'Universal IoT'),
