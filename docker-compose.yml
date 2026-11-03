@@ -161,7 +161,8 @@ services:
       dockerfile: Dockerfile
     container_name: ss-dashboard
     ports:
-      - "8501:8501"
+      - "80:80"          # Intro landing page (index.html + video)
+      - "8501:8501"      # Streamlit Command Center
     environment:
       BACKEND_URL: ${BACKEND_URL:-http://backend:8080}
       ML_URL: ${ML_URL:-http://ml-service:8000}
