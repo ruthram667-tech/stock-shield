@@ -7,6 +7,7 @@ from utils.ui_theme import (
     header_banner,
     sidebar_tenant_card,
     section_header,
+    render_breadcrumbs,
     badge,
     PLOTLY_LAYOUT_DEFAULTS,
     TRACE_CYAN,
@@ -29,7 +30,9 @@ sidebar_tenant_card(
 )
 st.sidebar.divider()
 
-# ─── Header ───────────────────────────────────────────────────────────────────
+# ─── Breadcrumbs & Header ─────────────────────────────────────────────────────
+render_breadcrumbs(["🛡️ StockShield", selected_tenant.get('name', 'Universal IoT'), "🧠 AI Model Studio"])
+
 header_banner(
     title="Custom AI Model Studio",
     tenant_name=selected_tenant.get('name', 'Universal IoT'),

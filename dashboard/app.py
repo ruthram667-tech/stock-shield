@@ -9,6 +9,7 @@ from utils.ui_theme import (
     header_banner,
     sidebar_tenant_card,
     section_header,
+    render_breadcrumbs,
     badge,
     PLOTLY_LAYOUT_DEFAULTS,
     TRACE_CYAN,
@@ -67,7 +68,9 @@ except Exception:
 models = api.fetch_tenant_models(active_tenant_id)
 ml_state = "READY" if models else "NO MODELS"
 
-# ─── Header Banner ────────────────────────────────────────────────────────────
+# ─── Breadcrumbs & Header Banner ─────────────────────────────────────────────
+render_breadcrumbs(["🛡️ StockShield", selected_tenant.get('name', 'Universal IoT'), "Command Center"])
+
 header_banner(
     title="StockShield Command Center",
     tenant_name=selected_tenant.get('name', 'Universal IoT'),
@@ -218,9 +221,8 @@ with chart_col:
                     ))
                     fig2.update_layout(**PLOTLY_LAYOUT_DEFAULTS,
                                        title="Buffer Stock Levels by Asset",
-                                       xaxis_title="Stock %",
-                                       xaxis=dict(**PLOTLY_LAYOUT_DEFAULTS['xaxis'], range=[0, 115]),
                                        height=max(280, len(df_inv) * 36))
+                    fig2.update_xaxes(title_text="Stock %", range=[0, 115])
                     fig2.add_vline(x=20, line_dash="dot", line_color=TRACE_CRIMSON,
                                    annotation_text="Critical", annotation_font=dict(color=TRACE_CRIMSON, size=10))
                     fig2.add_vline(x=50, line_dash="dash", line_color=TRACE_AMBER,

@@ -7,6 +7,7 @@ from utils.ui_theme import (
     header_banner,
     sidebar_tenant_card,
     section_header,
+    render_breadcrumbs,
     PLOTLY_LAYOUT_DEFAULTS,
     TRACE_CYAN,
     TRACE_EMERALD,
@@ -29,7 +30,9 @@ sidebar_tenant_card(
     industry=selected_tenant.get('industry', 'universal'),
 )
 
-# ─── Header ───────────────────────────────────────────────────────────────────
+# ─── Breadcrumbs & Header ─────────────────────────────────────────────────────
+render_breadcrumbs(["🛡️ StockShield", selected_tenant.get('name', 'Universal IoT'), "📡 Sensor Telemetry"])
+
 header_banner(
     title="Universal Sensor Telemetry",
     tenant_name=selected_tenant.get('name', 'Universal IoT'),

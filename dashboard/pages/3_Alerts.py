@@ -7,6 +7,7 @@ from utils.ui_theme import (
     header_banner,
     sidebar_tenant_card,
     section_header,
+    render_breadcrumbs,
     badge,
     PLOTLY_LAYOUT_DEFAULTS,
     TRACE_CYAN,
@@ -30,7 +31,9 @@ if active_tenant_id != "All Tenants":
         industry=selected_tenant.get('industry', 'universal'),
     )
 
-# ─── Header ───────────────────────────────────────────────────────────────────
+# ─── Breadcrumbs & Header ─────────────────────────────────────────────────────
+render_breadcrumbs(["🛡️ StockShield", selected_tenant.get('name', 'All Tenants') if active_tenant_id != "All Tenants" else "All Tenants", "🔔 Real-Time Alerts"])
+
 header_banner(
     title="Real-Time Alerts & Threshold Breaches",
     tenant_name=selected_tenant.get('name', 'All Tenants') if active_tenant_id != "All Tenants" else "All Tenants",

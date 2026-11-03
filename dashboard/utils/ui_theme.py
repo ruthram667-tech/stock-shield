@@ -302,6 +302,40 @@ hr {
     padding-bottom: 6px;
     border-bottom: 1px solid rgba(0, 229, 255, 0.10);
 }
+
+/* ── Breadcrumbs ─────────────────────────────────────────────────────────── */
+.breadcrumbs-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    margin-bottom: 14px;
+    background: rgba(17, 24, 39, 0.55);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(0, 229, 255, 0.15);
+    border-radius: 8px;
+    font-size: 0.76rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+}
+.breadcrumb-item {
+    color: #94A3B8;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+.breadcrumb-separator {
+    color: rgba(0, 229, 255, 0.4);
+    font-size: 0.9rem;
+    font-weight: 300;
+    user-select: none;
+    line-height: 1;
+}
+.breadcrumb-active {
+    color: #00E5FF;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
 </style>
 """
 
@@ -384,6 +418,24 @@ def sidebar_tenant_card(tenant_name: str, tenant_id: str, industry: str) -> None
 def section_header(text: str) -> None:
     """Render an uppercase muted section divider label."""
     st.markdown(f'<div class="section-header">{text}</div>', unsafe_allow_html=True)
+
+
+def render_breadcrumbs(items: list[str]) -> None:
+    """
+    Render a sleek glassmorphic breadcrumb trail.
+    Example: render_breadcrumbs(["🛡️ StockShield", "PharmaCorp", "📦 Inventory"])
+    """
+    html_parts = []
+    for i, item in enumerate(items):
+        is_last = (i == len(items) - 1)
+        if is_last:
+            html_parts.append(f'<span class="breadcrumb-item breadcrumb-active">{item}</span>')
+        else:
+            html_parts.append(f'<span class="breadcrumb-item">{item}</span>')
+            html_parts.append('<span class="breadcrumb-separator">›</span>')
+
+    trail = "".join(html_parts)
+    st.markdown(f'<div class="breadcrumbs-container">{trail}</div>', unsafe_allow_html=True)
 
 
 # ─── Plotly dark theme defaults ───────────────────────────────────────────────
