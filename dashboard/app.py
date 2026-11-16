@@ -17,6 +17,7 @@ from utils.ui_theme import (
     TRACE_EMERALD,
     TRACE_AMBER,
     TRACE_CRIMSON,
+    TRACE_CORAL,
 )
 
 st.set_page_config(
@@ -31,105 +32,66 @@ inject_global_css()
 if "user" not in st.session_state:
     st.session_state.user = None
 
-# Handle URL query parameter pre-login handoff (e.g. from index.html)
-query_user = st.query_params.get("user")
-if query_user and not st.session_state.user:
-    if query_user == "admin":
-        st.session_state.user = api.login_user("admin", "admin123")
-    elif query_user == "cold_emp":
-        st.session_state.user = api.login_user("cold_emp", "cold123")
-    elif query_user == "dry_emp":
-        st.session_state.user = api.login_user("dry_emp", "dry123")
-
-# ─── If Not Logged In: Render Financilux Login Gateway ─────────────────────────
+# ─── Pure Username & Password Login Page (Financilux Aesthetic) ────────────────
 if not st.session_state.user or "error" in st.session_state.user:
-    render_breadcrumbs(["🛡️ StockShield", "Authentication Portal", "Select Workspace Role"])
+    st.markdown("<div style='height: 40px;'></div>", unsafe_allow_html=True)
     
-    st.markdown("""
-<div style="text-align: center; max-width: 680px; margin: 20px auto 40px auto;">
-  <div style="display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 50%; background: #FF5520; color: white; font-size: 1.8rem; box-shadow: 0 10px 25px rgba(255,85,32,0.35); margin-bottom: 16px;">
-    🛡️
-  </div>
-  <h1 style="font-size: 2.8rem; font-weight: 800; letter-spacing: -0.04em; margin-bottom: 12px; color: #F8FAFC;">
-    Enterprise Access Gateway
-  </h1>
-  <p style="color: #94A3B8; font-size: 1.05rem; line-height: 1.6;">
-    Dual-dashboard architecture with role-based containment. Select a demo workspace role or sign in with your manager-provided credentials.
-  </p>
-</div>
-""", unsafe_allow_html=True)
+    col_l, col_center, col_r = st.columns([1, 1.4, 1])
 
-    col_m, col_e1, col_e2 = st.columns(3)
-
-    with col_m:
+    with col_center:
         st.markdown("""
-<div style="background: rgba(17, 24, 39, 0.85); border: 1.5px solid rgba(245, 158, 11, 0.4); border-radius: 20px; padding: 22px; text-align: left; height: 100%;">
-  <span style="background: #111827; border: 1px solid #F59E0B; color: #F59E0B; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; padding: 3px 10px; border-radius: 999px;">👔 Manager</span>
-  <h3 style="margin: 12px 0 6px 0; color: #F8FAFC; font-size: 1.15rem;">Facility Chief Manager</h3>
-  <p style="color: #94A3B8; font-size: 0.82rem; line-height: 1.4; margin-bottom: 16px;">
-    Global facility view: all warehouse zones, complete telemetry audit logs, and team provisioning.
-  </p>
-  <div style="background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 8px; font-family: monospace; font-size: 0.75rem; color: #CBD5E1; margin-bottom: 14px;">
-    User: <b>admin</b> · Pass: <b>admin123</b>
+<div style="background: rgba(255, 255, 255, 0.82); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(0, 0, 0, 0.08); border-radius: 24px; padding: 36px 32px; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.05); text-align: center; margin-bottom: 20px;">
+  
+  <!-- Financilux Animated Sunburst & Coral Brand Motif -->
+  <div style="position: relative; width: 80px; height: 80px; margin: 0 auto 18px auto; display: flex; align-items: center; justify-content: center;">
+    <svg class="sunburst-motif" width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="position: absolute;">
+      <line x1="50" y1="6" x2="50" y2="22" stroke="#141416" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="50" y1="78" x2="50" y2="94" stroke="#141416" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="6" y1="50" x2="22" y2="50" stroke="#141416" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="78" y1="50" x2="94" y2="50" stroke="#141416" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="18.9" y1="18.9" x2="30.2" y2="30.2" stroke="#141416" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="69.8" y1="69.8" x2="81.1" y2="81.1" stroke="#141416" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="18.9" y1="81.1" x2="30.2" y2="69.8" stroke="#141416" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="69.8" y1="30.2" x2="81.1" y2="18.9" stroke="#141416" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="33" y1="10" x2="39" y2="25" stroke="#141416" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="61" y1="75" x2="67" y2="90" stroke="#141416" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="10" y1="33" x2="25" y2="39" stroke="#141416" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="75" y1="61" x2="90" y2="67" stroke="#141416" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="67" y1="10" x2="61" y2="25" stroke="#141416" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="39" y1="75" x2="33" y2="90" stroke="#141416" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="90" y1="33" x2="75" y2="39" stroke="#141416" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="25" y1="61" x2="10" y2="67" stroke="#141416" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>
+    <div class="pulse-circle" style="width: 44px; height: 44px; border-radius: 50%; background: #FF5520; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; box-shadow: 0 6px 18px rgba(255,85,32,0.4); z-index: 2;">
+      🛡️
+    </div>
   </div>
+
+  <h2 style="font-size: 1.85rem; font-weight: 800; color: #141416; letter-spacing: -0.03em; margin-bottom: 6px;">
+    StockShield Access
+  </h2>
+  <p style="color: #6B7280; font-size: 0.9rem; margin-bottom: 24px;">
+    Enter your manager-assigned username and password to enter your workspace.
+  </p>
 </div>
 """, unsafe_allow_html=True)
-        if st.button("👑 Log in as Manager", use_container_width=True, type="primary"):
-            st.session_state.user = api.login_user("admin", "admin123")
-            st.rerun()
 
-    with col_e1:
-        st.markdown("""
-<div style="background: rgba(17, 24, 39, 0.85); border: 1.5px solid rgba(2, 132, 199, 0.4); border-radius: 20px; padding: 22px; text-align: left; height: 100%;">
-  <span style="background: rgba(2, 132, 199, 0.15); border: 1px solid #38BDF8; color: #38BDF8; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; padding: 3px 10px; border-radius: 999px;">❄️ Cold Storage</span>
-  <h3 style="margin: 12px 0 6px 0; color: #F8FAFC; font-size: 1.15rem;">Cold Storage Operator</h3>
-  <p style="color: #94A3B8; font-size: 0.82rem; line-height: 1.4; margin-bottom: 16px;">
-    Restricted containment: strictly view sub-zero frozen logs, humidity sensors, and refrigerated items.
-  </p>
-  <div style="background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 8px; font-family: monospace; font-size: 0.75rem; color: #CBD5E1; margin-bottom: 14px;">
-    User: <b>cold_emp</b> · Pass: <b>cold123</b>
-  </div>
-</div>
-""", unsafe_allow_html=True)
-        if st.button("❄️ Log in as Cold Storage Employee", use_container_width=True):
-            st.session_state.user = api.login_user("cold_emp", "cold123")
-            st.rerun()
+        with st.form("clean_login_form"):
+            username_input = st.text_input("Username", placeholder="e.g. admin or cold_emp")
+            password_input = st.text_input("Password", type="password", placeholder="Enter your password")
+            submit_login = st.form_submit_button("Sign In →", use_container_width=True, type="primary")
 
-    with col_e2:
-        st.markdown("""
-<div style="background: rgba(17, 24, 39, 0.85); border: 1.5px solid rgba(16, 185, 129, 0.4); border-radius: 20px; padding: 22px; text-align: left; height: 100%;">
-  <span style="background: rgba(16, 185, 129, 0.15); border: 1px solid #10B981; color: #10B981; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; padding: 3px 10px; border-radius: 999px;">🌾 Dry Storage</span>
-  <h3 style="margin: 12px 0 6px 0; color: #F8FAFC; font-size: 1.15rem;">Dry Goods Operator</h3>
-  <p style="color: #94A3B8; font-size: 0.82rem; line-height: 1.4; margin-bottom: 16px;">
-    Restricted containment: strictly view ambient warehouse racks, bulk dry goods, and humidity controls.
-  </p>
-  <div style="background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 8px; font-family: monospace; font-size: 0.75rem; color: #CBD5E1; margin-bottom: 14px;">
-    User: <b>dry_emp</b> · Pass: <b>dry123</b>
-  </div>
-</div>
-""", unsafe_allow_html=True)
-        if st.button("🌾 Log in as Dry Goods Employee", use_container_width=True):
-            st.session_state.user = api.login_user("dry_emp", "dry123")
-            st.rerun()
-
-    st.markdown("<br><hr style='border-color: rgba(255,255,255,0.08);'><br>", unsafe_allow_html=True)
-
-    # Custom Credential Login Form
-    with st.expander("🔑 Sign in with Custom Manager-Created Credentials", expanded=False):
-        c1, c2 = st.columns(2)
-        with c1:
-            custom_user = st.text_input("Username / Employee ID")
-        with c2:
-            custom_pass = st.text_input("Password", type="password")
-        if st.button("Authenticate", use_container_width=True):
-            if custom_user and custom_pass:
-                res = api.login_user(custom_user, custom_pass)
-                if "error" in res:
-                    st.error(res["error"])
+            if submit_login:
+                if username_input and password_input:
+                    res = api.login_user(username_input.strip(), password_input.strip())
+                    if "error" in res:
+                        st.error(f"❌ {res['error']}")
+                    else:
+                        st.session_state.user = res
+                        st.success(f"Welcome, {res.get('fullName', username_input)}!")
+                        st.rerun()
                 else:
-                    st.session_state.user = res
-                    st.success(f"Welcome, {res.get('fullName', custom_user)}!")
-                    st.rerun()
+                    st.warning("Please enter both username and password.")
 
     st.stop()
 
@@ -138,7 +100,7 @@ if not st.session_state.user or "error" in st.session_state.user:
 current_user = st.session_state.user
 user_role = current_user.get("role", "EMPLOYEE").upper()
 is_manager = (user_role == "MANAGER")
-user_zone = current_user.get("assignedLocation")  # e.g. "frozen", "dry-storage", or None for manager
+user_zone = current_user.get("assignedLocation")
 
 # ─── Sidebar ──────────────────────────────────────────────────────────────────
 sidebar_user_profile(current_user)
@@ -236,13 +198,13 @@ with main_tabs[0]:
 
     kpi1, kpi2, kpi3, kpi4 = st.columns(4)
     with kpi1:
-        st.metric("🟢 Active Sensors", sensors_online, delta="QoS 1 Telemetry")
+        st.metric("Active Sensors", sensors_online, delta="QoS 1 Telemetry")
     with kpi2:
-        st.metric("📦 Stock Health Index", f"{stock_health}%", delta=f"{total_items - low_stock} / {total_items} Optimal")
+        st.metric("Stock Health Index", f"{stock_health}%", delta=f"{total_items - low_stock} / {total_items} Optimal")
     with kpi3:
-        st.metric("📍 Monitored Locations", "All Facility" if is_manager else (user_zone or "Local"))
+        st.metric("Monitored Scope", "All Facility" if is_manager else (user_zone or "Local"))
     with kpi4:
-        st.metric("🔔 Active Zone Alerts", active_alerts, delta="Needs Review" if active_alerts > 0 else "All Clear", delta_color="inverse")
+        st.metric("Active Zone Alerts", active_alerts, delta="Needs Review" if active_alerts > 0 else "All Clear", delta_color="inverse")
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -254,7 +216,6 @@ with main_tabs[0]:
         tab_chart1, tab_chart2 = st.tabs(["📡 Live Sensor Waves", "📊 Stock Level Distribution"])
 
         with tab_chart1:
-            # Generate realistic multi-sensor telemetry curve
             now = datetime.datetime.now()
             times = [now - datetime.timedelta(minutes=i*10) for i in range(25, -1, -1)]
             
@@ -274,19 +235,19 @@ with main_tabs[0]:
             fig = go.Figure()
             fig.add_trace(go.Scatter(
                 x=times, y=temps, name=f"{zone_label} (°C)",
-                line=dict(color=TRACE_CYAN, width=2.5),
+                line=dict(color=TRACE_CORAL, width=2.5),
                 mode='lines+markers'
             ))
             fig.add_trace(go.Scatter(
                 x=times, y=humids, name="Relative Humidity (%)",
-                line=dict(color=TRACE_EMERALD, width=2, dash='dot'),
+                line=dict(color=TRACE_CYAN, width=2, dash='dot'),
                 yaxis="y2"
             ))
 
             fig.update_layout(
                 **PLOTLY_LAYOUT_DEFAULTS,
-                yaxis=dict(title="Temperature (°C)", gridcolor="rgba(255,255,255,0.06)"),
-                yaxis2=dict(title="Humidity (%)", overlaying="y", side="right", gridcolor="rgba(255,255,255,0.02)"),
+                yaxis=dict(title="Temperature (°C)", gridcolor="rgba(0,0,0,0.06)"),
+                yaxis2=dict(title="Humidity (%)", overlaying="y", side="right", gridcolor="rgba(0,0,0,0.03)"),
                 height=340,
                 legend=dict(orientation="h", y=1.12)
             )
@@ -316,13 +277,13 @@ with main_tabs[0]:
                 sev = alt.get("severity", "WARNING").upper()
                 c = "crimson" if sev == "CRITICAL" else "amber"
                 st.markdown(f"""
-<div style="background: rgba(17, 24, 39, 0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px; margin-bottom: 8px;">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+<div style="background: #FFFFFF; border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; padding: 14px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
     {badge(sev, c)}
-    <span style="font-size: 0.72rem; color: #64748B;">{alt.get('createdAt', 'Live')[:16].replace('T', ' ')}</span>
+    <span style="font-size: 0.72rem; color: #9CA3AF;">{alt.get('createdAt', 'Live')[:16].replace('T', ' ')}</span>
   </div>
-  <div style="font-size: 0.85rem; font-weight: 600; color: #F8FAFC;">{alt.get('message', 'Threshold warning')}</div>
-  <div style="font-size: 0.75rem; color: #94A3B8; margin-top: 4px;">Zone: <b>{alt.get('locationId', 'General')}</b> · Sensor: {alt.get('sensorType', 'Weight')}</div>
+  <div style="font-size: 0.88rem; font-weight: 700; color: #141416;">{alt.get('message', 'Threshold warning')}</div>
+  <div style="font-size: 0.76rem; color: #6B7280; margin-top: 4px;">Zone: <b>{alt.get('locationId', 'General')}</b> · Sensor: {alt.get('sensorType', 'Weight')}</div>
 </div>
 """, unsafe_allow_html=True)
         else:
@@ -336,7 +297,7 @@ with main_tabs[1]:
     if is_manager:
         section_header("👥 Employee Credential & Zone Provisioning")
         st.markdown("""
-<p style="color: #94A3B8; font-size: 0.9rem;">
+<p style="color: #6B7280; font-size: 0.9rem;">
   As Chief Facility Manager, you can create, assign, and revoke credentials for warehouse operators.
   Each employee is strictly confined to the zone designated here.
 </p>
@@ -392,10 +353,10 @@ with main_tabs[1]:
                         st.markdown(f"""
 <div style="margin-bottom: 12px;">
   <span class="user-role-tag {role_b}">{emp.get('role')}</span>
-  <b style="color: #F8FAFC; margin-left: 8px;">{emp.get('fullName', emp.get('username'))}</b> 
-  <span style="color: #64748B; font-size: 0.8rem;">(@{emp.get('username')})</span>
-  <div style="font-size: 0.78rem; color: #94A3B8; margin-top: 2px;">
-    Assigned Zone: <b style="color: #38BDF8;">{zone_label}</b> · Email: {emp.get('email')}
+  <b style="color: #141416; margin-left: 8px;">{emp.get('fullName', emp.get('username'))}</b> 
+  <span style="color: #9CA3AF; font-size: 0.8rem;">(@{emp.get('username')})</span>
+  <div style="font-size: 0.78rem; color: #6B7280; margin-top: 2px;">
+    Assigned Zone: <b style="color: #FF5520;">{zone_label}</b> · Email: {emp.get('email')}
   </div>
 </div>
 """, unsafe_allow_html=True)
@@ -432,11 +393,11 @@ with main_tabs[1]:
 with main_tabs[2]:
     if is_manager:
         section_header("📑 Global Audit & Incident Log Archive")
-        st.markdown("<p style='color: #94A3B8;'>Full archival record across all facilities, edge sensor alerts, and staff actions.</p>", unsafe_allow_html=True)
+        st.markdown("<p style='color: #6B7280;'>Full archival record across all facilities, edge sensor alerts, and staff actions.</p>", unsafe_allow_html=True)
         all_alerts = api.fetch_recent_alerts(limit=50, tenant_id=active_tenant_id)
     else:
         section_header(f"🔔 Incident Logs for {user_zone.upper() if user_zone else 'ASSIGNED ZONE'}")
-        st.markdown(f"<p style='color: #94A3B8;'>Restricted view: Incident logs isolated strictly to {user_zone}.</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='color: #6B7280;'>Restricted view: Incident logs isolated strictly to {user_zone}.</p>", unsafe_allow_html=True)
         all_alerts = api.fetch_recent_alerts(limit=50, tenant_id=active_tenant_id, location_id=user_zone)
 
     if all_alerts:

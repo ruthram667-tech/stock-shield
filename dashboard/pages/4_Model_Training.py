@@ -28,8 +28,8 @@ if user:
         st.markdown(f"""
 <div class="glass-card" style="padding: 36px; text-align: center;">
   <div style="font-size: 2.8rem; margin-bottom: 12px;">🛡️🔐</div>
-  <h3 style="color: #F8FAFC;">Manager Permissions Required</h3>
-  <p style="color: #94A3B8; max-width: 540px; margin: 10px auto;">
+  <h3 style="color: #141416;">Manager Permissions Required</h3>
+  <p style="color: #6B7280; max-width: 540px; margin: 10px auto;">
     You are signed in as <b>{user.get('fullName', user.get('username'))}</b> (Operator scoped to <b>{user.get('assignedLocation')}</b>).
     Algorithmic training, Prophet fitting, and mathematical parameter modifications are restricted to facility managers.
   </p>

@@ -1,6 +1,6 @@
 FROM python:3.12-slim
 
-# Install nginx for serving the landing page + static video
+# Install nginx for serving the Financilux landing page
 RUN apt-get update && apt-get install -y --no-install-recommends nginx && \
     rm -rf /var/lib/apt/lists/*
 
@@ -21,7 +21,6 @@ server {
     location /static/ {
         alias /app/static/;
         add_header Cache-Control "public, max-age=31536000";
-        types { video/mp4 mp4; }
     }
 
     location / {

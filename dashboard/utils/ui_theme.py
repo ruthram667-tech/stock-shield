@@ -1,80 +1,122 @@
 """
-ui_theme.py — StockShield Command Center
-Centralized CSS injection and reusable HTML component helpers.
+ui_theme.py — StockShield Financilux Command Center
+Warm cream glassmorphism, clean typography, coral accents & dual-role styling.
 Call `inject_global_css()` at the top of every page (after set_page_config).
 """
 
 import streamlit as st
 
-# ─── Palette constants (mirrors .streamlit/config.toml) ──────────────────────
-CYAN    = "#00E5FF"
-EMERALD = "#10B981"
-AMBER   = "#F59E0B"
-CRIMSON = "#EF4444"
-BG      = "#0B0F17"
-SURFACE = "#111827"
-TEXT    = "#F8FAFC"
-MUTED   = "#94A3B8"
+# ─── Palette constants (Financilux Aesthetic) ──────────────────────────────────
+CORAL   = "#FF5520"
+EMERALD = "#059669"
+AMBER   = "#D97706"
+CRIMSON = "#DC2626"
+CYAN    = "#0284C7"
+BG      = "#F5F3EF"
+SURFACE = "rgba(255, 255, 255, 0.78)"
+TEXT    = "#141416"
+MUTED   = "#6B7280"
 
 # ─── Master CSS ───────────────────────────────────────────────────────────────
 _CSS = """
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap');
+
 /* ── Canvas ──────────────────────────────────────────────────────────────── */
 .stApp {
-    background-color: #0B0F17 !important;
+    background-color: #F5F3EF !important;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+    color: #141416 !important;
 }
+
+/* Subtle architectural grid pattern */
+.stApp::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: 
+        radial-gradient(circle at 10% 20%, rgba(255, 85, 32, 0.03) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(2, 132, 199, 0.03) 0%, transparent 40%),
+        linear-gradient(to right, rgba(0,0,0,0.02) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0,0,0,0.02) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 48px 48px, 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+}
+
 .block-container {
-    padding-top: 2rem !important;
+    padding-top: 1.5rem !important;
     padding-bottom: 2rem !important;
     max-width: 100% !important;
+    position: relative;
+    z-index: 1;
+}
+
+/* ── Typography Override ─────────────────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    font-weight: 700 !important;
+    color: #141416 !important;
+    letter-spacing: -0.02em !important;
+}
+
+p, span, label, div {
+    color: #141416;
 }
 
 /* ── Sidebar ─────────────────────────────────────────────────────────────── */
 section[data-testid="stSidebar"] {
-    background-color: #0D1322 !important;
-    border-right: 1px solid rgba(0, 229, 255, 0.12) !important;
+    background-color: rgba(255, 255, 255, 0.85) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.03) !important;
 }
+
 section[data-testid="stSidebar"] .stMarkdown p,
 section[data-testid="stSidebar"] label,
 section[data-testid="stSidebar"] .stSelectbox label {
-    color: #94A3B8 !important;
+    color: #4B5563 !important;
     font-size: 0.78rem !important;
-    letter-spacing: 0.04em;
+    font-weight: 600 !important;
+    letter-spacing: 0.03em;
 }
+
 section[data-testid="stSidebar"] .stSelectbox > div > div {
-    background-color: #111827 !important;
-    border: 1px solid rgba(0, 229, 255, 0.18) !important;
-    color: #F8FAFC !important;
-    border-radius: 8px !important;
+    background-color: #FFFFFF !important;
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
+    color: #141416 !important;
+    border-radius: 10px !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04) !important;
 }
 
 /* ── Glass Card ──────────────────────────────────────────────────────────── */
 .glass-card {
-    background: rgba(17, 24, 39, 0.75);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(0, 229, 255, 0.18);
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-    margin-bottom: 1rem;
-    transition: all 0.2s ease;
+    background: rgba(255, 255, 255, 0.80);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    border-radius: 18px;
+    padding: 24px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
+    margin-bottom: 1.25rem;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .glass-card:hover {
-    border-color: rgba(0, 229, 255, 0.45);
+    border-color: rgba(255, 85, 32, 0.3);
     transform: translateY(-2px);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.06);
 }
 
 /* ── Header Card ─────────────────────────────────────────────────────────── */
 .header-card {
-    background: linear-gradient(135deg, rgba(17,24,39,0.9) 0%, rgba(13,19,34,0.95) 100%);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(0, 229, 255, 0.22);
-    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(248, 246, 241, 0.92) 100%);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 18px;
     padding: 24px 28px;
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(0, 229, 255, 0.06);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
     margin-bottom: 1.5rem;
     display: flex;
     align-items: center;
@@ -91,20 +133,20 @@ section[data-testid="stSidebar"] .stSelectbox > div > div {
 }
 .header-title {
     font-size: 1.6rem;
-    font-weight: 700;
-    color: #F8FAFC;
-    letter-spacing: -0.02em;
+    font-weight: 800;
+    color: #141416;
+    letter-spacing: -0.03em;
     margin: 0;
 }
 .header-tenant {
     font-size: 1rem;
-    color: #00E5FF;
-    font-weight: 600;
+    color: #FF5520;
+    font-weight: 700;
     margin: 0;
 }
 .header-subtitle {
-    font-size: 0.8rem;
-    color: #94A3B8;
+    font-size: 0.85rem;
+    color: #6B7280;
     margin: 0;
 }
 .header-right {
@@ -119,61 +161,68 @@ section[data-testid="stSidebar"] .stSelectbox > div > div {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 4px 12px;
+    padding: 5px 14px;
     border-radius: 999px;
     font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    font-family: monospace;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    font-family: 'Space Grotesk', monospace;
     white-space: nowrap;
 }
 .badge-cyan {
-    background: rgba(0, 229, 255, 0.10);
-    border: 1px solid rgba(0, 229, 255, 0.35);
-    color: #00E5FF;
+    background: rgba(2, 132, 199, 0.10);
+    border: 1px solid rgba(2, 132, 199, 0.3);
+    color: #0284C7;
 }
 .badge-emerald {
-    background: rgba(16, 185, 129, 0.12);
-    border: 1px solid rgba(16, 185, 129, 0.35);
-    color: #10B981;
+    background: rgba(5, 150, 105, 0.10);
+    border: 1px solid rgba(5, 150, 105, 0.3);
+    color: #059669;
 }
 .badge-amber {
-    background: rgba(245, 158, 11, 0.12);
-    border: 1px solid rgba(245, 158, 11, 0.35);
-    color: #F59E0B;
+    background: rgba(217, 119, 6, 0.10);
+    border: 1px solid rgba(217, 119, 6, 0.3);
+    color: #D97706;
 }
 .badge-crimson {
-    background: rgba(239, 68, 68, 0.12);
-    border: 1px solid rgba(239, 68, 68, 0.35);
-    color: #EF4444;
+    background: rgba(220, 38, 38, 0.10);
+    border: 1px solid rgba(220, 38, 38, 0.3);
+    color: #DC2626;
+}
+.badge-coral {
+    background: rgba(255, 85, 32, 0.10);
+    border: 1px solid rgba(255, 85, 32, 0.3);
+    color: #FF5520;
 }
 .badge-glow-emerald {
     animation: pulse-emerald 2s infinite;
 }
 @keyframes pulse-emerald {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
-    50%       { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+    0%, 100% { box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.4); }
+    50%       { box-shadow: 0 0 0 6px rgba(5, 150, 105, 0); }
 }
 
 /* ── Tenant Info Card (sidebar) ──────────────────────────────────────────── */
 .tenant-card {
-    background: rgba(17, 24, 39, 0.7);
-    border: 1px solid rgba(0, 229, 255, 0.15);
-    border-radius: 10px;
-    padding: 12px 14px;
-    margin: 8px 0 4px 0;
+    background: #FFFFFF;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 12px;
+    padding: 14px;
+    margin: 8px 0;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.03);
 }
 .tenant-card-label {
     font-size: 0.68rem;
-    color: #64748B;
+    color: #9CA3AF;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    margin-bottom: 6px;
+    font-weight: 700;
+    margin-bottom: 4px;
 }
 .tenant-card-name {
-    font-size: 0.88rem;
-    font-weight: 600;
-    color: #F8FAFC;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #141416;
     margin-bottom: 8px;
 }
 .tenant-meta {
@@ -185,122 +234,159 @@ section[data-testid="stSidebar"] .stSelectbox > div > div {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 0.72rem;
+    font-size: 0.74rem;
 }
 .tenant-meta-key {
-    color: #64748B;
+    color: #6B7280;
 }
 .tenant-meta-val {
     font-family: monospace;
-    color: #00E5FF;
-    background: rgba(0, 229, 255, 0.07);
-    border: 1px solid rgba(0, 229, 255, 0.2);
+    color: #FF5520;
+    background: rgba(255, 85, 32, 0.08);
     border-radius: 4px;
-    padding: 1px 6px;
-    font-size: 0.68rem;
+    padding: 2px 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
 }
 .tenant-meta-val-industry {
     font-family: monospace;
-    color: #10B981;
-    background: rgba(16, 185, 129, 0.08);
-    border: 1px solid rgba(16, 185, 129, 0.2);
+    color: #059669;
+    background: rgba(5, 150, 105, 0.08);
     border-radius: 4px;
-    padding: 1px 6px;
-    font-size: 0.68rem;
+    padding: 2px 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
 }
 
 /* ── KPI Metric Card Override ────────────────────────────────────────────── */
 div[data-testid="metric-container"] {
-    background: rgba(17, 24, 39, 0.75) !important;
-    border: 1px solid rgba(0, 229, 255, 0.15) !important;
-    border-radius: 12px !important;
-    padding: 16px 20px !important;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.3) !important;
+    background: rgba(255, 255, 255, 0.88) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border-radius: 16px !important;
+    padding: 18px 22px !important;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.03) !important;
     transition: all 0.2s ease !important;
 }
 div[data-testid="metric-container"]:hover {
-    border-color: rgba(0, 229, 255, 0.4) !important;
+    border-color: rgba(255, 85, 32, 0.35) !important;
     transform: translateY(-2px) !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06) !important;
 }
 div[data-testid="metric-container"] label {
-    color: #94A3B8 !important;
-    font-size: 0.72rem !important;
-    letter-spacing: 0.06em !important;
+    color: #6B7280 !important;
+    font-size: 0.74rem !important;
+    letter-spacing: 0.05em !important;
     text-transform: uppercase !important;
-}
-div[data-testid="metric-container"] [data-testid="stMetricValue"] {
-    color: #F8FAFC !important;
-    font-size: 1.8rem !important;
     font-weight: 700 !important;
 }
+div[data-testid="metric-container"] [data-testid="stMetricValue"] {
+    color: #141416 !important;
+    font-size: 1.9rem !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.03em !important;
+}
 div[data-testid="metric-container"] [data-testid="stMetricDelta"] {
-    font-size: 0.75rem !important;
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
 }
 
 /* ── Dataframe / Tables ──────────────────────────────────────────────────── */
 .stDataFrame {
-    border: 1px solid rgba(0, 229, 255, 0.12) !important;
-    border-radius: 10px !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border-radius: 12px !important;
     overflow: hidden !important;
+    background: #FFFFFF !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.02) !important;
+}
+
+/* ── Inputs & Selects ────────────────────────────────────────────────────── */
+.stTextInput input, .stSelectbox [data-baseweb="select"] {
+    background-color: #FFFFFF !important;
+    color: #141416 !important;
+    border: 1.5px solid rgba(0, 0, 0, 0.12) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02) !important;
+    font-family: inherit !important;
+}
+.stTextInput input:focus {
+    border-color: #FF5520 !important;
+    box-shadow: 0 0 0 3px rgba(255, 85, 32, 0.15) !important;
 }
 
 /* ── Buttons ─────────────────────────────────────────────────────────────── */
-.stButton > button[kind="primary"] {
-    background: linear-gradient(135deg, #00E5FF 0%, #0099CC 100%) !important;
-    color: #0B0F17 !important;
+.stButton > button {
+    border-radius: 12px !important;
     font-weight: 700 !important;
+    padding: 10px 24px !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    border: 1px solid rgba(0,0,0,0.1) !important;
+}
+.stButton > button[kind="primary"] {
+    background: #FF5520 !important;
+    color: #FFFFFF !important;
     border: none !important;
-    border-radius: 8px !important;
-    letter-spacing: 0.04em;
+    box-shadow: 0 8px 20px rgba(255, 85, 32, 0.3) !important;
 }
 .stButton > button[kind="primary"]:hover {
-    opacity: 0.88 !important;
-    transform: translateY(-1px) !important;
+    background: #E04616 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 12px 26px rgba(255, 85, 32, 0.4) !important;
+}
+.stButton > button[kind="secondary"] {
+    background: #FFFFFF !important;
+    color: #141416 !important;
+}
+.stButton > button[kind="secondary"]:hover {
+    background: #F9FAFB !important;
+    border-color: #FF5520 !important;
 }
 
 /* ── Tabs ────────────────────────────────────────────────────────────────── */
 .stTabs [data-baseweb="tab-list"] {
-    background: rgba(17,24,39,0.5) !important;
-    border-radius: 10px !important;
+    background: rgba(0, 0, 0, 0.04) !important;
+    border-radius: 12px !important;
     padding: 4px !important;
-    gap: 4px !important;
-    border: 1px solid rgba(0, 229, 255, 0.1) !important;
+    gap: 6px !important;
+    border: 1px solid rgba(0, 0, 0, 0.05) !important;
 }
 .stTabs [data-baseweb="tab"] {
-    border-radius: 7px !important;
-    color: #94A3B8 !important;
-    font-weight: 500 !important;
+    border-radius: 9px !important;
+    color: #6B7280 !important;
+    font-weight: 600 !important;
+    padding: 8px 16px !important;
 }
 .stTabs [aria-selected="true"] {
-    background: rgba(0, 229, 255, 0.12) !important;
-    color: #00E5FF !important;
-    font-weight: 600 !important;
+    background: #FFFFFF !important;
+    color: #141416 !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
 }
 
 /* ── Expander ────────────────────────────────────────────────────────────── */
 .streamlit-expanderHeader {
-    background: rgba(17, 24, 39, 0.6) !important;
-    border: 1px solid rgba(0, 229, 255, 0.12) !important;
-    border-radius: 8px !important;
-    color: #94A3B8 !important;
-    font-size: 0.82rem !important;
+    background: rgba(255, 255, 255, 0.8) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border-radius: 12px !important;
+    color: #141416 !important;
+    font-weight: 600 !important;
+    font-size: 0.88rem !important;
 }
 
 /* ── Sidebar divider ─────────────────────────────────────────────────────── */
 hr {
-    border-color: rgba(0, 229, 255, 0.10) !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
 }
 
 /* ── Section subheader ───────────────────────────────────────────────────── */
 .section-header {
     font-size: 0.72rem;
-    font-weight: 600;
-    color: #64748B;
+    font-weight: 700;
+    color: #6B7280;
     letter-spacing: 0.10em;
     text-transform: uppercase;
     margin-bottom: 10px;
     padding-bottom: 6px;
-    border-bottom: 1px solid rgba(0, 229, 255, 0.10);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 /* ── Breadcrumbs ─────────────────────────────────────────────────────────── */
@@ -308,43 +394,44 @@ hr {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 6px 14px;
-    margin-bottom: 14px;
-    background: rgba(17, 24, 39, 0.55);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1px solid rgba(0, 229, 255, 0.15);
-    border-radius: 8px;
-    font-size: 0.76rem;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+    padding: 7px 16px;
+    margin-bottom: 16px;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    border-radius: 12px;
+    font-size: 0.78rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
 }
 .breadcrumb-item {
-    color: #94A3B8;
+    color: #6B7280;
     display: inline-flex;
     align-items: center;
     gap: 5px;
+    font-weight: 500;
 }
 .breadcrumb-separator {
-    color: rgba(0, 229, 255, 0.4);
-    font-size: 0.9rem;
+    color: #9CA3AF;
+    font-size: 0.95rem;
     font-weight: 300;
     user-select: none;
     line-height: 1;
 }
 .breadcrumb-active {
-    color: #00E5FF;
-    font-weight: 600;
+    color: #FF5520;
+    font-weight: 700;
     letter-spacing: 0.02em;
 }
-/* ── Financilux Glass & Role Enhancements ────────────────────────────────── */
+
+/* ── Financilux User Profile Card ────────────────────────────────────────── */
 .user-profile-card {
-    background: rgba(17, 24, 39, 0.85);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 85, 32, 0.25);
+    background: #FFFFFF;
+    border: 1px solid rgba(0, 0, 0, 0.08);
     border-radius: 16px;
     padding: 16px;
-    margin-bottom: 12px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    margin-bottom: 14px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
 }
 .user-profile-header {
     display: flex;
@@ -353,22 +440,22 @@ hr {
     margin-bottom: 10px;
 }
 .user-avatar {
-    width: 38px;
-    height: 38px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
     background: #FF5520;
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 700;
-    font-size: 1rem;
-    box-shadow: 0 4px 12px rgba(255, 85, 32, 0.4);
+    font-weight: 800;
+    font-size: 1.1rem;
+    box-shadow: 0 4px 12px rgba(255, 85, 32, 0.35);
 }
 .user-name {
-    font-weight: 700;
-    font-size: 0.95rem;
-    color: #F8FAFC;
+    font-weight: 800;
+    font-size: 1rem;
+    color: #141416;
     line-height: 1.2;
 }
 .user-role-tag {
@@ -377,44 +464,64 @@ hr {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    padding: 2px 8px;
+    padding: 3px 10px;
     border-radius: 999px;
     margin-top: 4px;
 }
 .user-role-tag.manager {
-    background: #111827;
-    border: 1px solid rgba(245, 158, 11, 0.5);
-    color: #F59E0B;
+    background: rgba(255, 85, 32, 0.10);
+    border: 1px solid rgba(255, 85, 32, 0.35);
+    color: #FF5520;
 }
 .user-role-tag.employee {
-    background: rgba(2, 132, 199, 0.15);
-    border: 1px solid rgba(2, 132, 199, 0.5);
-    color: #38BDF8;
+    background: rgba(2, 132, 199, 0.10);
+    border: 1px solid rgba(2, 132, 199, 0.35);
+    color: #0284C7;
 }
 .user-location-info {
-    font-size: 0.76rem;
-    color: #94A3B8;
-    background: rgba(0, 0, 0, 0.25);
-    padding: 6px 10px;
-    border-radius: 8px;
-    margin-top: 6px;
+    font-size: 0.78rem;
+    color: #4B5563;
+    background: #F5F3EF;
+    padding: 7px 12px;
+    border-radius: 10px;
+    margin-top: 8px;
     display: flex;
     align-items: center;
     gap: 6px;
+    font-weight: 600;
+}
+
+/* ── Financilux Animated Motif ───────────────────────────────────────────── */
+.sunburst-motif {
+    animation: rotateSunburst 28s linear infinite;
+    transform-origin: center;
+}
+@keyframes rotateSunburst {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.pulse-circle {
+    animation: pulseRing 3s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+@keyframes pulseRing {
+    0% { transform: scale(0.95); opacity: 0.8; }
+    50% { transform: scale(1.08); opacity: 1; }
+    100% { transform: scale(0.95); opacity: 0.8; }
 }
 </style>
 """
 
 
 def inject_global_css() -> None:
-    """Inject all global dark-mode Command Center styles. Call on every page."""
+    """Inject all global Financilux Command Center styles. Call on every page."""
     st.markdown(_CSS, unsafe_allow_html=True)
 
 
 # ─── HTML Component Helpers ───────────────────────────────────────────────────
 
-def badge(text: str, variant: str = "cyan") -> str:
-    """Return an inline badge HTML string. variant: cyan | emerald | amber | crimson"""
+def badge(text: str, variant: str = "coral") -> str:
+    """Return an inline badge HTML string. variant: coral | emerald | amber | crimson | cyan"""
     extra = " badge-glow-emerald" if variant == "emerald" else ""
     return f'<span class="badge-base badge-{variant}{extra}">{text}</span>'
 
@@ -434,18 +541,19 @@ def header_banner(
 ) -> None:
     """
     Render the top 2-column glass banner with live status pills.
-    All arguments are display-only strings; no session state is touched.
     """
     telem_badge = badge("● TELEMETRY ONLINE", "emerald") if telemetry_online else badge("● TELEMETRY OFFLINE", "crimson")
-    sector_badge = badge(f"⬡ {sector.upper()}", "cyan") if sector else ""
+    sector_badge = badge(f"⬡ {sector.upper()}", "coral") if sector else ""
     ml_color = "emerald" if ml_state in ("READY", "TRAINED") else "amber"
     ml_badge = badge(f"🧠 ML {ml_state}", ml_color)
 
     st.markdown(f"""
 <div class="header-card">
   <div class="header-left">
-    <span class="header-icon">🛡️</span>
-    <p class="header-title">{title}</p>
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 2px;">
+      <span class="header-icon">🛡️</span>
+      <p class="header-title">{title}</p>
+    </div>
     <p class="header-tenant">{tenant_name}</p>
     <p class="header-subtitle">{subtitle}</p>
   </div>
@@ -461,7 +569,6 @@ def header_banner(
 def sidebar_tenant_card(tenant_name: str, tenant_id: str, industry: str) -> None:
     """
     Render the compact tenant info card in the sidebar.
-    Call AFTER the selectbox so values are already resolved.
     """
     st.sidebar.markdown(f"""
 <div class="tenant-card">
@@ -487,10 +594,7 @@ def section_header(text: str) -> None:
 
 
 def render_breadcrumbs(items: list[str]) -> None:
-    """
-    Render a sleek glassmorphic breadcrumb trail.
-    Example: render_breadcrumbs(["🛡️ StockShield", "PharmaCorp", "📦 Inventory"])
-    """
+    """Render a sleek glassmorphic breadcrumb trail."""
     html_parts = []
     for i, item in enumerate(items):
         is_last = (i == len(items) - 1)
@@ -504,35 +608,36 @@ def render_breadcrumbs(items: list[str]) -> None:
     st.markdown(f'<div class="breadcrumbs-container">{trail}</div>', unsafe_allow_html=True)
 
 
-# ─── Plotly dark theme defaults ───────────────────────────────────────────────
+# ─── Plotly Light Theme Defaults (Financilux) ─────────────────────────────────
 PLOTLY_LAYOUT_DEFAULTS = dict(
     paper_bgcolor="rgba(0,0,0,0)",
-    plot_bgcolor="rgba(17,24,39,0.5)",
-    font=dict(color="#F8FAFC", family="sans-serif"),
+    plot_bgcolor="rgba(255,255,255,0.7)",
+    font=dict(color="#141416", family="Plus Jakarta Sans, sans-serif"),
     xaxis=dict(
-        gridcolor="rgba(255,255,255,0.05)",
-        linecolor="rgba(0,229,255,0.15)",
-        tickfont=dict(color="#94A3B8"),
+        gridcolor="rgba(0,0,0,0.06)",
+        linecolor="rgba(0,0,0,0.12)",
+        tickfont=dict(color="#6B7280"),
     ),
     yaxis=dict(
-        gridcolor="rgba(255,255,255,0.05)",
-        linecolor="rgba(0,229,255,0.15)",
-        tickfont=dict(color="#94A3B8"),
+        gridcolor="rgba(0,0,0,0.06)",
+        linecolor="rgba(0,0,0,0.12)",
+        tickfont=dict(color="#6B7280"),
     ),
     margin=dict(l=40, r=40, t=50, b=40),
     hovermode="x unified",
     legend=dict(
-        bgcolor="rgba(17,24,39,0.8)",
-        bordercolor="rgba(0,229,255,0.2)",
+        bgcolor="rgba(255,255,255,0.9)",
+        bordercolor="rgba(0,0,0,0.08)",
         borderwidth=1,
-        font=dict(color="#94A3B8"),
+        font=dict(color="#141416"),
     ),
 )
 
-TRACE_CYAN    = "#00E5FF"
-TRACE_EMERALD = "#10B981"
-TRACE_AMBER   = "#F59E0B"
-TRACE_CRIMSON = "#EF4444"
+TRACE_CYAN    = "#0284C7"
+TRACE_EMERALD = "#059669"
+TRACE_AMBER   = "#D97706"
+TRACE_CRIMSON = "#DC2626"
+TRACE_CORAL   = "#FF5520"
 
 
 def sidebar_user_profile(user: dict) -> None:
@@ -563,5 +668,3 @@ def sidebar_user_profile(user: dict) -> None:
   </div>
 </div>
 """, unsafe_allow_html=True)
-
-

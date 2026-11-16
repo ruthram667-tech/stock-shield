@@ -585,7 +585,7 @@
         <li><a href="#ml">AI Forecast</a></li>
       </ul>
       <div class="nav-actions">
-        <button class="btn-pill-black" onclick="launchDashboard('admin')">
+        <button class="btn-pill-black" onclick="launchDashboard()">
           Launch Portal &rarr;
         </button>
       </div>
@@ -607,30 +607,14 @@
           Enterprise real-time monitoring across refrigerated vaults, dry storage racks, and chemical processing with role-based zone containment.
         </p>
 
-        <!-- Role-Based Direct Login Selector -->
-        <div class="role-selection-box" id="rbac">
-          <div class="role-box-title">
-            <span>Select Workspace Role to Enter</span>
-            <span>🔐 RBAC Active</span>
-          </div>
-
-          <div class="role-cards-grid">
-            <!-- Manager Card -->
-            <div class="role-card active" onclick="launchDashboard('admin')">
-              <span class="role-badge manager">👔 Manager</span>
-              <div class="role-name">Chief Manager</div>
-              <div class="role-desc">Full facility visibility across all zones, all audit logs, and employee provisioning.</div>
-              <div class="role-cred-tag">User: admin · Pass: admin123</div>
-            </div>
-
-            <!-- Cold Storage Employee Card -->
-            <div class="role-card" onclick="launchDashboard('cold_emp')">
-              <span class="role-badge employee">❄️ Cold Storage</span>
-              <div class="role-name">Zone Employee</div>
-              <div class="role-desc">Restricted strictly to the Cold Storage Freezer: temperature, humidity, and zone logs.</div>
-              <div class="role-cred-tag">User: cold_emp · Pass: cold123</div>
-            </div>
-          </div>
+        <!-- Direct Login Portal Gateway Button -->
+        <div style="margin-top: 36px; display: flex; gap: 16px; align-items: center;">
+          <button class="btn-pill-black" style="background: #FF5520; color: white; padding: 16px 36px; font-size: 1.05rem; font-weight: 700; box-shadow: 0 10px 25px rgba(255,85,32,0.35); border: none; cursor: pointer;" onclick="launchDashboard()">
+            Sign In to Command Center &rarr;
+          </button>
+          <a href="http://localhost:8501" target="_blank" style="color: #6B7280; font-size: 0.88rem; font-weight: 600; text-decoration: none; padding: 12px 18px; border: 1px solid rgba(0,0,0,0.1); border-radius: 999px;">
+            Open in New Tab &#x2197;
+          </a>
         </div>
       </div>
 
@@ -659,7 +643,7 @@
         </svg>
 
         <!-- Orange Circle with Diagonal Arrow -->
-        <div class="coral-action-circle" onclick="launchDashboard('admin')" title="Enter System">
+        <div class="coral-action-circle" onclick="launchDashboard()" title="Enter System">
           &#x2198;
         </div>
 
@@ -753,12 +737,11 @@
   </div>
 
   <script>
-    function launchDashboard(rolePreset) {
+    function launchDashboard() {
       const dashboardView = document.getElementById('dashboard-view');
       const appFrame = document.getElementById('app-frame');
       
-      // Pass preselected role hint in URL hash or query for seamless Streamlit handoff
-      appFrame.src = "http://localhost:8501?user=" + encodeURIComponent(rolePreset);
+      appFrame.src = "http://localhost:8501";
       dashboardView.style.display = "block";
     }
 
