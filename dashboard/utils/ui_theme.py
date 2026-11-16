@@ -649,6 +649,17 @@ def sidebar_user_profile(user: dict) -> None:
     initial = full_name[0].upper() if full_name else "U"
     assigned_loc = user.get("assignedLocation")
 
+    # If employee, hide manager-only pages from navigation
+    if role == "EMPLOYEE":
+        st.markdown("""
+        <style>
+        [data-testid="stSidebarNav"] li:has(a[href*="Model_Training"]),
+        [data-testid="stSidebarNav"] li:has(a[href*="Sensor_Registry"]) {
+            display: none !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
     if role == "MANAGER":
         loc_text = "🌐 Global (All Facility Zones)"
     else:

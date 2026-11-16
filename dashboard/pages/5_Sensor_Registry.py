@@ -16,9 +16,17 @@ inject_global_css()
 
 # ─── RBAC Access Gate ─────────────────────────────────────────────────────────
 user = st.session_state.get("user")
-if user:
-    sidebar_user_profile(user)
-    if user.get("role", "").upper() == "EMPLOYEE":
+if not user or "error" in user:
+    st.markdown("""
+    <style>
+    section[data-testid="stSidebar"], div[data-testid="collapsedControl"] { display: none !important; }
+    </style>
+    """, unsafe_allow_html=True)
+    st.warning("🔒 Please sign in from the main portal first.")
+    st.stop()
+
+sidebar_user_profile(user)
+if user.get("role", "").upper() == "EMPLOYEE":
         render_breadcrumbs(["🛡️ StockShield", "⚙️ Sensor Registry", "Access Restricted"])
         st.error("🔒 **Access Restricted to Chief Facility Managers**")
         st.markdown(f"""

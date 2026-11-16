@@ -34,6 +34,21 @@ if "user" not in st.session_state:
 
 # ─── Pure Username & Password Login Page (Financilux Aesthetic) ────────────────
 if not st.session_state.user or "error" in st.session_state.user:
+    # Completely hide sidebar and sidebar navigation toggle on the login page
+    st.markdown("""
+    <style>
+    section[data-testid="stSidebar"] {
+        display: none !important;
+    }
+    div[data-testid="collapsedControl"], button[kind="header"] {
+        display: none !important;
+    }
+    [data-testid="stSidebarNav"] {
+        display: none !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     st.markdown("<div style='height: 40px;'></div>", unsafe_allow_html=True)
     
     col_l, col_center, col_r = st.columns([1, 1.4, 1])

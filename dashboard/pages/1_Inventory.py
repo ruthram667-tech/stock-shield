@@ -16,13 +16,18 @@ inject_global_css()
 
 # ─── User Profile & Scope ─────────────────────────────────────────────────────
 user = st.session_state.get("user")
-if user:
-    sidebar_user_profile(user)
-    is_employee = (user.get("role", "").upper() == "EMPLOYEE")
-    user_zone = user.get("assignedLocation")
-else:
-    is_employee = False
-    user_zone = None
+if not user or "error" in user:
+    st.markdown("""
+    <style>
+    section[data-testid="stSidebar"], div[data-testid="collapsedControl"] { display: none !important; }
+    </style>
+    """, unsafe_allow_html=True)
+    st.warning("🔒 Please sign in from the main portal first.")
+    st.stop()
+
+sidebar_user_profile(user)
+is_employee = (user.get("role", "").upper() == "EMPLOYEE")
+user_zone = user.get("assignedLocation")
 
 # ─── Sidebar ──────────────────────────────────────────────────────────────────
 st.sidebar.markdown('<div class="section-header">🏢 Organization</div>', unsafe_allow_html=True)
