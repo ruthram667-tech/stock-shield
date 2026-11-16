@@ -27,9 +27,32 @@ public class InventoryService {
      * Returns all inventory items enriched with live status data.
      */
     public List<InventoryItemResponse> getAllItems() {
-        List<InventoryItem> items = itemRepository.findAll();
-        List<InventoryItemResponse> responses = new ArrayList<>();
+        return getItemsFiltered(null, null, null);
+    }
 
+    /**
+     * Returns inventory items filtered by tenant, zone, or location.
+     */
+    public List<InventoryItemResponse> getItemsFiltered(String tenantId, String zone, String locationId) {
+        List<InventoryItem> items;
+        if (tenantId != null && !tenantId.isBlank()) {
+            if (zone != null && !zone.isBlank()) {
+                items = itemRepository.findByTenantIdAndZone(tenantId, zone);
+            } else if (locationId != null && !locationId.isBlank()) {
+                items = itemRepository.findByTenantIdAndLocationId(tenantId, locationId);
+            } else {
+                items = itemRepository.findByTenantId(tenantId);
+            }
+        } else {
+            if (zone != null && !zone.isBlank()) {
+                items = itemRepository.findByZone(zone);
+            } else if (locationId != null && !locationId.isBlank()) {
+                items = itemRepository.findByLocationId(locationId);
+            } else {
+                items = itemRepository.findAll();
+            }
+        }
+        List<InventoryItemResponse> responses = new ArrayList<>();
         for (InventoryItem item : items) {
             responses.add(enrichWithLiveData(item));
         }

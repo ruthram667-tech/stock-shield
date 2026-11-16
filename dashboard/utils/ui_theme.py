@@ -336,6 +336,72 @@ hr {
     font-weight: 600;
     letter-spacing: 0.02em;
 }
+/* ── Financilux Glass & Role Enhancements ────────────────────────────────── */
+.user-profile-card {
+    background: rgba(17, 24, 39, 0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 85, 32, 0.25);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+.user-profile-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+.user-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #FF5520;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1rem;
+    box-shadow: 0 4px 12px rgba(255, 85, 32, 0.4);
+}
+.user-name {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #F8FAFC;
+    line-height: 1.2;
+}
+.user-role-tag {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 2px 8px;
+    border-radius: 999px;
+    margin-top: 4px;
+}
+.user-role-tag.manager {
+    background: #111827;
+    border: 1px solid rgba(245, 158, 11, 0.5);
+    color: #F59E0B;
+}
+.user-role-tag.employee {
+    background: rgba(2, 132, 199, 0.15);
+    border: 1px solid rgba(2, 132, 199, 0.5);
+    color: #38BDF8;
+}
+.user-location-info {
+    font-size: 0.76rem;
+    color: #94A3B8;
+    background: rgba(0, 0, 0, 0.25);
+    padding: 6px 10px;
+    border-radius: 8px;
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
 </style>
 """
 
@@ -467,4 +533,35 @@ TRACE_CYAN    = "#00E5FF"
 TRACE_EMERALD = "#10B981"
 TRACE_AMBER   = "#F59E0B"
 TRACE_CRIMSON = "#EF4444"
+
+
+def sidebar_user_profile(user: dict) -> None:
+    """Render the active user profile in the sidebar with role & zone containment badges."""
+    role = user.get("role", "EMPLOYEE").upper()
+    role_class = "manager" if role == "MANAGER" else "employee"
+    role_label = "👔 Facility Manager" if role == "MANAGER" else "👤 Zone Operator"
+    full_name = user.get("fullName") or user.get("username", "Authenticated User")
+    initial = full_name[0].upper() if full_name else "U"
+    assigned_loc = user.get("assignedLocation")
+
+    if role == "MANAGER":
+        loc_text = "🌐 Global (All Facility Zones)"
+    else:
+        loc_text = f"📍 {assigned_loc.replace('-', ' ').title()} (Restricted)" if assigned_loc else "📍 Unassigned Zone"
+
+    st.sidebar.markdown(f"""
+<div class="user-profile-card">
+  <div class="user-profile-header">
+    <div class="user-avatar">{initial}</div>
+    <div>
+      <div class="user-name">{full_name}</div>
+      <span class="user-role-tag {role_class}">{role_label}</span>
+    </div>
+  </div>
+  <div class="user-location-info">
+    <span>{loc_text}</span>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
 

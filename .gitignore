@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.env
+.env.local
+
+# Maven / Java
+target/
+*.jar
+*.war
+*.class
+.mvn/
+.idea/
+*.iml
+.vscode/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# OS
+.DS_Store
+Thumbs.db

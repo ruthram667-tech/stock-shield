@@ -16,8 +16,11 @@ public class InventoryController {
     private final InventoryService inventoryService;
 
     @GetMapping
-    public ResponseEntity<List<InventoryItemResponse>> getAllItems() {
-        return ResponseEntity.ok(inventoryService.getAllItems());
+    public ResponseEntity<List<InventoryItemResponse>> getAllItems(
+            @RequestParam(required = false) String tenantId,
+            @RequestParam(required = false) String zone,
+            @RequestParam(required = false) String locationId) {
+        return ResponseEntity.ok(inventoryService.getItemsFiltered(tenantId, zone, locationId));
     }
 
     @GetMapping("/{id}")

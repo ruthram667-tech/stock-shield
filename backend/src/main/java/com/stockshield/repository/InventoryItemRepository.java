@@ -16,4 +16,8 @@ public interface InventoryItemRepository extends JpaRepository<InventoryItem, St
     List<InventoryItem> findByLocationId(String locationId);
 
     List<InventoryItem> findByTenantIdAndLocationId(String tenantId, String locationId);
+
+    List<InventoryItem> findByZone(String zone);
+
+    List<InventoryItem> findByTenantIdAndZone(String tenantId, String zone);
 }

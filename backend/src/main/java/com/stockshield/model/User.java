@@ -27,6 +27,16 @@ public class User {
     @Column(nullable = false, length = 50)
     private String role;
 
+    @Column(name = "full_name", length = 150)
+    private String fullName;
+
+    @Column(name = "assigned_location", length = 100)
+    private String assignedLocation;
+
+    @Column(name = "is_active")
+    @Builder.Default
+    private Boolean isActive = true;
+
     @Column(name = "created_at", updatable = false)
     private Instant createdAt;
 

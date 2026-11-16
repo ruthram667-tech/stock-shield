@@ -5,6 +5,7 @@ from utils.ui_theme import (
     inject_global_css,
     header_banner,
     sidebar_tenant_card,
+    sidebar_user_profile,
     section_header,
     render_breadcrumbs,
     badge,
@@ -12,6 +13,25 @@ from utils.ui_theme import (
 
 st.set_page_config(page_title="Sensor Registry · StockShield", page_icon="⚙️", layout="wide")
 inject_global_css()
+
+# ─── RBAC Access Gate ─────────────────────────────────────────────────────────
+user = st.session_state.get("user")
+if user:
+    sidebar_user_profile(user)
+    if user.get("role", "").upper() == "EMPLOYEE":
+        render_breadcrumbs(["🛡️ StockShield", "⚙️ Sensor Registry", "Access Restricted"])
+        st.error("🔒 **Access Restricted to Chief Facility Managers**")
+        st.markdown(f"""
+<div class="glass-card" style="padding: 36px; text-align: center;">
+  <div style="font-size: 2.8rem; margin-bottom: 12px;">🛡️⚙️</div>
+  <h3 style="color: #F8FAFC;">Manager Permissions Required</h3>
+  <p style="color: #94A3B8; max-width: 540px; margin: 10px auto;">
+    You are signed in as <b>{user.get('fullName', user.get('username'))}</b> (Operator scoped to <b>{user.get('assignedLocation')}</b>).
+    Hardware sensor onboarding and dynamic telemetry registry are restricted to facility managers.
+  </p>
+</div>
+""", unsafe_allow_html=True)
+        st.stop()
 
 # ─── Sidebar ──────────────────────────────────────────────────────────────────
 st.sidebar.markdown('<div class="section-header">🏢 Organization</div>', unsafe_allow_html=True)

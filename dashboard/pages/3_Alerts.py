@@ -6,6 +6,7 @@ from utils.ui_theme import (
     inject_global_css,
     header_banner,
     sidebar_tenant_card,
+    sidebar_user_profile,
     section_header,
     render_breadcrumbs,
     badge,
@@ -17,6 +18,16 @@ from utils.ui_theme import (
 
 st.set_page_config(page_title="Alerts Stream · StockShield", page_icon="🔔", layout="wide")
 inject_global_css()
+
+# ─── User Profile & Scope ─────────────────────────────────────────────────────
+user = st.session_state.get("user")
+if user:
+    sidebar_user_profile(user)
+    is_employee = (user.get("role", "").upper() == "EMPLOYEE")
+    user_zone = user.get("assignedLocation")
+else:
+    is_employee = False
+    user_zone = None
 
 # ─── Sidebar ──────────────────────────────────────────────────────────────────
 st.sidebar.markdown('<div class="section-header">🏢 Organization</div>', unsafe_allow_html=True)
@@ -32,21 +43,26 @@ if active_tenant_id != "All Tenants":
     )
 
 # ─── Breadcrumbs & Header ─────────────────────────────────────────────────────
-render_breadcrumbs(["🛡️ StockShield", selected_tenant.get('name', 'All Tenants') if active_tenant_id != "All Tenants" else "All Tenants", "🔔 Real-Time Alerts"])
+scope_note = f"Zone: {user_zone.upper()}" if is_employee and user_zone else "Global Facility Incidents"
+render_breadcrumbs(["🛡️ StockShield", selected_tenant.get('name', 'All Tenants') if active_tenant_id != "All Tenants" else "All Tenants", "🔔 Real-Time Alerts", scope_note])
 
 header_banner(
-    title="Real-Time Alerts & Threshold Breaches",
-    tenant_name=selected_tenant.get('name', 'All Tenants') if active_tenant_id != "All Tenants" else "All Tenants",
-    subtitle="Live monitoring of safety bounds, threshold violations & low inventory across all locations",
+    title=f"Incident & Anomaly Logs — {'🔒 Zone Restricted' if is_employee else '🌐 Global Audit'}",
+    tenant_name=f"{selected_tenant.get('name', 'All Tenants') if active_tenant_id != 'All Tenants' else 'All Tenants'} · {scope_note}",
+    subtitle="Live monitoring of safety bounds, threshold violations & critical warnings",
     telemetry_online=True,
     sector=selected_tenant.get('industry', ''),
     ml_state="MONITORING",
 )
 
+if is_employee and user_zone:
+    st.info(f"🔒 **Access Contained:** You are viewing incident logs strictly generated within the **{user_zone.upper()}** department.")
+
 # ─── Content ──────────────────────────────────────────────────────────────────
 try:
     tenant_param = None if active_tenant_id == "All Tenants" else active_tenant_id
-    alerts = api.fetch_recent_alerts(limit=100, tenant_id=tenant_param)
+    location_param = user_zone if is_employee else None
+    alerts = api.fetch_recent_alerts(limit=100, tenant_id=tenant_param, location_id=location_param)
 
     if alerts:
         df = pd.DataFrame(alerts)
@@ -61,6 +77,10 @@ try:
         df['Location'] = df.get('locationId', df.get('shelfId', ''))
         df['Item']     = df.get('itemId', '')
         df['Tenant']   = df.get('tenantId', '')
+
+        # If Employee, double check local location filtering
+        if is_employee and user_zone:
+            df = df[df['Location'].str.lower().str.contains(user_zone.lower()) | df['Message'].str.lower().str.contains(user_zone.lower())]
 
         # ─── Filters ──────────────────────────────────────────────────────────
         section_header("🔍 Filter Alerts")
@@ -95,7 +115,7 @@ try:
         with m4:
             st.metric("🔵 Info", info_count)
 
-        # ─── Table ────────────────────────────────────────────────────────────
+        # ─── Table ────────────────────────────────────────────────────
         st.markdown("<br>", unsafe_allow_html=True)
         section_header("📋 Alert Log")
         cols_to_display = ['Time', 'Severity', 'Tenant', 'Location', 'Sensor', 'Type', 'Message']
@@ -132,8 +152,8 @@ try:
         st.markdown("""
 <div class="glass-card" style="text-align:center;padding:56px;">
   <div style="font-size:2.5rem;margin-bottom:12px;">✅</div>
-  <div style="color:#10B981;font-size:1rem;font-weight:700;">All systems operating within safe limits</div>
-  <div style="color:#64748B;font-size:0.8rem;margin-top:8px;">No recent alerts found across monitored locations.</div>
+  <div style="color:#10B981;font-size:1rem;font-weight:700;">All monitored parameters operating within safe limits</div>
+  <div style="color:#64748B;font-size:0.8rem;margin-top:8px;">No recent alerts found for this scope.</div>
 </div>
 """, unsafe_allow_html=True)
 

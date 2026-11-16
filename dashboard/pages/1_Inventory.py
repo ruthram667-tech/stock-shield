@@ -5,6 +5,7 @@ from utils.ui_theme import (
     inject_global_css,
     header_banner,
     sidebar_tenant_card,
+    sidebar_user_profile,
     section_header,
     render_breadcrumbs,
     badge,
@@ -12,6 +13,16 @@ from utils.ui_theme import (
 
 st.set_page_config(page_title="Asset Inventory · StockShield", page_icon="📦", layout="wide")
 inject_global_css()
+
+# ─── User Profile & Scope ─────────────────────────────────────────────────────
+user = st.session_state.get("user")
+if user:
+    sidebar_user_profile(user)
+    is_employee = (user.get("role", "").upper() == "EMPLOYEE")
+    user_zone = user.get("assignedLocation")
+else:
+    is_employee = False
+    user_zone = None
 
 # ─── Sidebar ──────────────────────────────────────────────────────────────────
 st.sidebar.markdown('<div class="section-header">🏢 Organization</div>', unsafe_allow_html=True)
@@ -26,20 +37,24 @@ sidebar_tenant_card(
 )
 
 # ─── Breadcrumbs & Header ─────────────────────────────────────────────────────
-render_breadcrumbs(["🛡️ StockShield", selected_tenant.get('name', 'Universal IoT'), "📦 Asset Inventory"])
+scope_note = f"Zone: {user_zone.upper()}" if is_employee and user_zone else "All Facility Locations"
+render_breadcrumbs(["🛡️ StockShield", selected_tenant.get('name', 'Universal IoT'), "📦 Asset Inventory", scope_note])
 
 header_banner(
-    title="Asset & Stock Inventory",
-    tenant_name=selected_tenant.get('name', 'Universal IoT'),
+    title=f"Asset & Stock Inventory — {'🔒 Zone Restricted' if is_employee else '🌐 Global Registry'}",
+    tenant_name=f"{selected_tenant.get('name', 'Universal IoT')} · {scope_note}",
     subtitle="Universal stock tracking across warehouse shelves, tanks, cold vaults & stations",
     telemetry_online=True,
     sector=selected_tenant.get('industry', ''),
     ml_state="MONITORING",
 )
 
+if is_employee and user_zone:
+    st.info(f"🔒 **Access Contained:** You are currently logged in as a Zone Operator. You are only viewing stock items physically stored inside the **{user_zone.upper()}** department.")
+
 # ─── Content ──────────────────────────────────────────────────────────────────
 try:
-    inventory = api.fetch_inventory()
+    inventory = api.fetch_inventory(tenant_id=active_tenant_id, zone=user_zone if is_employee else None)
     if inventory:
         df = pd.DataFrame(inventory)
 
@@ -48,6 +63,11 @@ try:
             tenant_items = df[df['tenantId'] == active_tenant_id]
             if not tenant_items.empty:
                 df = tenant_items
+
+        # If Employee, enforce strict zone filtering
+        if is_employee and user_zone:
+            if 'zone' in df.columns:
+                df = df[df['zone'].str.lower() == user_zone.lower()]
 
         # Search and filters
         section_header("🔍 Search & Filter")
@@ -96,7 +116,7 @@ try:
         st.markdown("""
 <div class="glass-card" style="text-align:center;padding:40px;">
   <div style="font-size:2.5rem;margin-bottom:10px;">📭</div>
-  <div style="color:#94A3B8;">No inventory assets found for this tenant.</div>
+  <div style="color:#94A3B8;">No inventory assets found for this zone or tenant.</div>
 </div>
 """, unsafe_allow_html=True)
 except Exception as e:

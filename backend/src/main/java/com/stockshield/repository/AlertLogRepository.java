@@ -25,7 +25,15 @@ public interface AlertLogRepository extends JpaRepository<AlertLog, Long> {
 
     List<AlertLog> findByTenantIdOrderByCreatedAtDesc(String tenantId, Pageable pageable);
 
+    List<AlertLog> findByLocationIdOrderByCreatedAtDesc(String locationId, Pageable pageable);
+
+    List<AlertLog> findByTenantIdAndLocationIdOrderByCreatedAtDesc(String tenantId, String locationId, Pageable pageable);
+
     long countByTenantIdAndAcknowledgedFalse(String tenantId);
+
+    long countByLocationIdAndAcknowledgedFalse(String locationId);
+
+    long countByTenantIdAndLocationIdAndAcknowledgedFalse(String tenantId, String locationId);
 
     /**
      * Cooldown check: has an alert of this type been fired recently for this location + sensor?

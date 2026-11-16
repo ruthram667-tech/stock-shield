@@ -23,14 +23,26 @@ public class DashboardController {
     private final SensorRepository sensorRepository;
 
     /**
-     * Aggregated summary for dashboard cards, optionally filtered by tenant.
+     * Aggregated summary for dashboard cards, optionally filtered by tenant and location/zone.
      */
     @GetMapping("/summary")
     public ResponseEntity<DashboardSummary> getSummary(
-            @RequestParam(required = false) String tenantId) {
-        Collection<InventoryStatus> statuses = (tenantId != null && !tenantId.isBlank())
+            @RequestParam(required = false) String tenantId,
+            @RequestParam(required = false) String locationId) {
+        Collection<InventoryStatus> rawStatuses = (tenantId != null && !tenantId.isBlank())
                 ? mqttListenerService.getStatusesByTenant(tenantId)
                 : mqttListenerService.getAllStatuses();
+
+        List<InventoryStatus> statuses = new java.util.ArrayList<>();
+        for (InventoryStatus s : rawStatuses) {
+            if (locationId != null && !locationId.isBlank()) {
+                if (locationId.equalsIgnoreCase(s.getLocationId())) {
+                    statuses.add(s);
+                }
+            } else {
+                statuses.add(s);
+            }
+        }
 
         int totalItems = statuses.size();
         int lowStock = 0;
@@ -57,9 +69,18 @@ public class DashboardController {
             }
         }
 
-        long activeAlerts = (tenantId != null && !tenantId.isBlank())
-                ? alertLogRepository.countByTenantIdAndAcknowledgedFalse(tenantId)
-                : alertLogRepository.countByAcknowledgedFalse();
+        long activeAlerts;
+        if (locationId != null && !locationId.isBlank()) {
+            if (tenantId != null && !tenantId.isBlank()) {
+                activeAlerts = alertLogRepository.countByTenantIdAndLocationIdAndAcknowledgedFalse(tenantId, locationId);
+            } else {
+                activeAlerts = alertLogRepository.countByLocationIdAndAcknowledgedFalse(locationId);
+            }
+        } else if (tenantId != null && !tenantId.isBlank()) {
+            activeAlerts = alertLogRepository.countByTenantIdAndAcknowledgedFalse(tenantId);
+        } else {
+            activeAlerts = alertLogRepository.countByAcknowledgedFalse();
+        }
 
         long sensorsOnline = sensorRepository.countByStatus(SensorStatus.ONLINE);
         long sensorsOffline = sensorRepository.countByStatus(SensorStatus.OFFLINE);
@@ -79,12 +100,23 @@ public class DashboardController {
     }
 
     /**
-     * Recent alerts for the dashboard feed, optionally filtered by tenant.
+     * Recent alerts for the dashboard feed, optionally filtered by tenant and location/zone.
      */
     @GetMapping("/alerts/recent")
     public ResponseEntity<List<AlertLog>> getRecentAlerts(
             @RequestParam(required = false) String tenantId,
+            @RequestParam(required = false) String locationId,
             @RequestParam(defaultValue = "20") int limit) {
+        if (locationId != null && !locationId.isBlank()) {
+            if (tenantId != null && !tenantId.isBlank()) {
+                return ResponseEntity.ok(
+                        alertLogRepository.findByTenantIdAndLocationIdOrderByCreatedAtDesc(
+                                tenantId, locationId, PageRequest.of(0, limit)));
+            }
+            return ResponseEntity.ok(
+                    alertLogRepository.findByLocationIdOrderByCreatedAtDesc(
+                            locationId, PageRequest.of(0, limit)));
+        }
         if (tenantId != null && !tenantId.isBlank()) {
             return ResponseEntity.ok(
                     alertLogRepository.findByTenantIdOrderByCreatedAtDesc(tenantId, PageRequest.of(0, limit)));
