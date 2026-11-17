@@ -252,13 +252,17 @@ def fetch_alert_items():
 # ─── Telemetry ───────────────────────────────────────────────────────────────
 
 def fetch_generic_telemetry(tenant_id, location_id, sensor_type, range_str="24h"):
-    res = requests.get(
-        f"{API_BASE}/telemetry/generic/{tenant_id}/{location_id}/{sensor_type}",
-        params={"range": range_str},
-        timeout=5
-    )
-    res.raise_for_status()
-    return res.json()
+    try:
+        res = requests.get(
+            f"{API_BASE}/telemetry/{tenant_id}/{location_id}/{sensor_type}",
+            params={"range": range_str},
+            timeout=5
+        )
+        if res.status_code == 200:
+            return res.json()
+        return []
+    except Exception:
+        return []
 
 
 def fetch_telemetry(shelf_id, range_str='24h'):
