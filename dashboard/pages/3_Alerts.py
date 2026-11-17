@@ -16,7 +16,7 @@ from utils.ui_theme import (
     TRACE_CRIMSON,
 )
 
-st.set_page_config(page_title="Alerts Stream · StockShield", page_icon="🔔", layout="wide")
+st.set_page_config(page_title="Incident Stream · StockShield", layout="wide")
 inject_global_css()
 
 # ─── User Profile & Scope ─────────────────────────────────────────────────────
@@ -27,7 +27,7 @@ if not user or "error" in user:
     section[data-testid="stSidebar"], div[data-testid="collapsedControl"] { display: none !important; }
     </style>
     """, unsafe_allow_html=True)
-    st.warning("🔒 Please sign in from the main portal first.")
+    st.warning("Please authenticate on the main console first.")
     st.stop()
 
 sidebar_user_profile(user)
@@ -35,7 +35,7 @@ is_employee = (user.get("role", "").upper() == "EMPLOYEE")
 user_zone = user.get("assignedLocation")
 
 # ─── Sidebar ──────────────────────────────────────────────────────────────────
-st.sidebar.markdown('<div class="section-header">🏢 Organization</div>', unsafe_allow_html=True)
+st.sidebar.markdown('<div class="section-header">Organization</div>', unsafe_allow_html=True)
 tenants = api.fetch_tenants()
 tenant_map = {f"{t['name']} ({t.get('industry', 'general')})": t['id'] for t in tenants}
 active_tenant_id = st.sidebar.selectbox("Filter Tenant", ["All Tenants"] + list(tenant_map.values()), index=0)
@@ -48,20 +48,21 @@ if active_tenant_id != "All Tenants":
     )
 
 # ─── Breadcrumbs & Header ─────────────────────────────────────────────────────
-scope_note = f"Zone: {user_zone.upper()}" if is_employee and user_zone else "Global Facility Incidents"
-render_breadcrumbs(["🛡️ StockShield", selected_tenant.get('name', 'All Tenants') if active_tenant_id != "All Tenants" else "All Tenants", "🔔 Real-Time Alerts", scope_note])
+scope_note = f"ZONE: {user_zone.upper()}" if is_employee and user_zone else "ALL LOCATIONS"
+tenant_label = selected_tenant.get('name', 'All Tenants') if active_tenant_id != "All Tenants" else "ALL TENANTS"
+render_breadcrumbs(["STOCKSHIELD", tenant_label.upper(), "ALERTS", scope_note])
 
 header_banner(
-    title=f"Incident & Anomaly Logs — {'🔒 Zone Restricted' if is_employee else '🌐 Global Audit'}",
-    tenant_name=f"{selected_tenant.get('name', 'All Tenants') if active_tenant_id != 'All Tenants' else 'All Tenants'} · {scope_note}",
-    subtitle="Live monitoring of safety bounds, threshold violations & critical warnings",
+    title="Incident & Threshold Audit Archive",
+    tenant_name=f"TENANT: {active_tenant_id} | {scope_note}",
+    subtitle="Safety bounds violation logs, critical anomalies, and hardware heartbeat timeouts",
     telemetry_online=True,
     sector=selected_tenant.get('industry', ''),
-    ml_state="MONITORING",
+    ml_state="ACTIVE",
 )
 
 if is_employee and user_zone:
-    st.info(f"🔒 **Access Contained:** You are viewing incident logs strictly generated within the **{user_zone.upper()}** department.")
+    st.info(f"CONTAINMENT ACTIVE: Scoped strictly to {user_zone.upper()}.")
 
 # ─── Content ──────────────────────────────────────────────────────────────────
 try:
@@ -83,12 +84,11 @@ try:
         df['Item']     = df.get('itemId', '')
         df['Tenant']   = df.get('tenantId', '')
 
-        # If Employee, double check local location filtering
         if is_employee and user_zone:
             df = df[df['Location'].str.lower().str.contains(user_zone.lower()) | df['Message'].str.lower().str.contains(user_zone.lower())]
 
         # ─── Filters ──────────────────────────────────────────────────────────
-        section_header("🔍 Filter Alerts")
+        section_header("Filter Incidents")
         col1, col2, col3 = st.columns(3)
         with col1:
             severity_filter = st.selectbox("Severity", ["All", "CRITICAL", "WARNING", "INFO"])
@@ -106,23 +106,23 @@ try:
 
         # ─── KPI strip ────────────────────────────────────────────────────────
         st.markdown("<br>", unsafe_allow_html=True)
-        section_header("📊 Alert Summary")
+        section_header("Incident Statistics")
         m1, m2, m3, m4 = st.columns(4)
         crit_count = len(df[df['Severity'] == 'CRITICAL']) if 'Severity' in df.columns else 0
         warn_count = len(df[df['Severity'] == 'WARNING'])  if 'Severity' in df.columns else 0
         info_count = len(df[df['Severity'] == 'INFO'])     if 'Severity' in df.columns else 0
         with m1:
-            st.metric("Total Alerts", len(df))
+            st.metric("Total Logged", len(df))
         with m2:
-            st.metric("🔴 Critical", crit_count, delta_color="inverse")
+            st.metric("Critical", crit_count, delta_color="inverse")
         with m3:
-            st.metric("🟡 Warning", warn_count, delta_color="inverse")
+            st.metric("Warning", warn_count, delta_color="inverse")
         with m4:
-            st.metric("🔵 Info", info_count)
+            st.metric("Info", info_count)
 
         # ─── Table ────────────────────────────────────────────────────
         st.markdown("<br>", unsafe_allow_html=True)
-        section_header("📋 Alert Log")
+        section_header("Audit Log")
         cols_to_display = ['Time', 'Severity', 'Tenant', 'Location', 'Sensor', 'Type', 'Message']
         available = [c for c in cols_to_display if c in df.columns]
         st.dataframe(df[available], use_container_width=True, hide_index=True)
@@ -130,7 +130,7 @@ try:
         # ─── Severity distribution chart ──────────────────────────────────────
         if 'Severity' in df.columns and not df.empty:
             st.markdown("<br>", unsafe_allow_html=True)
-            section_header("📈 Severity Breakdown")
+            section_header("Severity Breakdown")
             sev_counts = df['Severity'].value_counts().reset_index()
             sev_counts.columns = ['Severity', 'Count']
             color_map = {'CRITICAL': TRACE_CRIMSON, 'WARNING': TRACE_AMBER, 'INFO': TRACE_CYAN}
@@ -146,21 +146,20 @@ try:
                 ))
             fig.update_layout(
                 **PLOTLY_LAYOUT_DEFAULTS,
-                title="Alert Severity Distribution",
+                title="Severity Distribution",
                 showlegend=False,
                 bargap=0.4,
-                height=300,
+                height=280,
             )
             st.plotly_chart(fig, use_container_width=True)
 
     else:
         st.markdown("""
-<div class="glass-card" style="text-align:center;padding:56px;">
-  <div style="font-size:2.5rem;margin-bottom:12px;">✅</div>
-  <div style="color:#10B981;font-size:1rem;font-weight:700;">All monitored parameters operating within safe limits</div>
-  <div style="color:#64748B;font-size:0.8rem;margin-top:8px;">No recent alerts found for this scope.</div>
+<div class="glass-card" style="text-align:center;padding:48px;">
+  <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: #10B981; margin-bottom: 6px;">STATUS: NOMINAL</div>
+  <div style="color: #94A3B8; font-size: 0.88rem;">All monitored telemetry parameters operating within nominal bounds.</div>
 </div>
 """, unsafe_allow_html=True)
 
 except Exception as e:
-    st.error(f"Failed to load alerts: {e}")
+    st.error(f"Error loading incidents: {e}")

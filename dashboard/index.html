@@ -3,753 +3,269 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>StockShield — Industrial IoT & Cold-Chain Platform</title>
+  <title>StockShield — Industrial IoT Telemetry & Warehouse Control</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
     :root {
-      --bg-cream: #F5F3EF;
-      --card-bg: rgba(255, 255, 255, 0.72);
-      --card-border: rgba(0, 0, 0, 0.07);
-      --text-main: #141416;
-      --text-muted: #6B7280;
-      --accent-coral: #FF5520;
-      --accent-black: #111111;
-      --accent-emerald: #10B981;
-      --accent-cyan: #0284C7;
-      --glass-blur: blur(20px);
+      --bg: #0B0F17;
+      --panel: #111827;
+      --border: #1E293B;
+      --text: #F8FAFC;
+      --muted: #94A3B8;
+      --cyan: #06B6D4;
+      --emerald: #10B981;
     }
-
     html, body {
       width: 100%;
-      min-height: 100%;
-      background: var(--bg-cream);
-      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-      color: var(--text-main);
-      overflow-x: hidden;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, sans-serif;
     }
-
-    /* ── Subtle architectural background grid ────────────────────────── */
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      background-image: 
-        radial-gradient(circle at 10% 20%, rgba(255, 85, 32, 0.04) 0%, transparent 35%),
-        radial-gradient(circle at 90% 80%, rgba(2, 132, 199, 0.04) 0%, transparent 40%),
-        linear-gradient(to right, rgba(0,0,0,0.02) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(0,0,0,0.02) 1px, transparent 1px);
-      background-size: 100% 100%, 100% 100%, 48px 48px, 48px 48px;
-      pointer-events: none;
-      z-index: 0;
-    }
-
     .container {
-      max-width: 1280px;
+      max-width: 1180px;
       margin: 0 auto;
       padding: 0 32px;
-      position: relative;
-      z-index: 1;
     }
-
-    /* ── Header Navbar ───────────────────────────────────────────────── */
     nav {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 28px 0;
+      padding: 24px 0;
+      border-bottom: 1px solid var(--border);
     }
-
-    .logo-group {
+    .brand {
       display: flex;
       align-items: center;
       gap: 12px;
-      text-decoration: none;
-      color: var(--text-main);
-    }
-
-    .logo-mark {
-      width: 38px;
-      height: 38px;
-      background: var(--accent-black);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
+      font-weight: 700;
       font-size: 1.1rem;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-    }
-
-    .logo-text {
-      font-weight: 800;
-      font-size: 1.35rem;
-      letter-spacing: -0.03em;
-    }
-
-    .nav-links {
-      display: flex;
-      gap: 36px;
-      list-style: none;
-    }
-
-    .nav-links a {
-      text-decoration: none;
-      color: var(--text-muted);
-      font-size: 0.92rem;
-      font-weight: 500;
-      transition: color 0.2s;
-    }
-    .nav-links a:hover { color: var(--text-main); }
-
-    .nav-actions {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .btn-pill-black {
-      background: var(--accent-black);
-      color: #fff;
-      padding: 12px 26px;
-      border-radius: 9999px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      text-decoration: none;
-      border: none;
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .btn-pill-black:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-      background: #222;
-    }
-
-    /* ── Hero Grid ───────────────────────────────────────────────────── */
-    .hero {
-      display: grid;
-      grid-template-columns: 1.1fr 1fr;
-      gap: 48px;
-      align-items: center;
-      padding: 40px 0 60px;
-    }
-
-    .trial-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      margin-bottom: 24px;
-      position: relative;
-    }
-
-    .trial-pill .arrow-node {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      border: 1px solid rgba(0,0,0,0.18);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.75rem;
-      color: var(--text-main);
-    }
-
-    .hero-title {
-      font-size: 4rem;
-      font-weight: 800;
-      line-height: 1.05;
-      letter-spacing: -0.04em;
-      margin-bottom: 24px;
-      color: var(--text-main);
-    }
-
-    .hero-sub {
-      font-size: 1.12rem;
-      color: var(--text-muted);
-      line-height: 1.6;
-      max-width: 480px;
-      margin-bottom: 36px;
-    }
-
-    .hero-ctas {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 48px;
-    }
-
-    .btn-demo {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: transparent;
-      border: none;
-      color: var(--text-main);
-      font-size: 0.95rem;
-      font-weight: 600;
-      cursor: pointer;
-      padding: 10px 16px;
-    }
-    .btn-demo .play-circle {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      border: 1.5px solid var(--text-main);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.7rem;
-    }
-
-    /* ── Interactive Role Cards (Dual-Role Selection) ────────────────── */
-    .role-selection-box {
-      background: var(--card-bg);
-      backdrop-filter: var(--glass-blur);
-      -webkit-backdrop-filter: var(--glass-blur);
-      border: 1px solid var(--card-border);
-      border-radius: 28px;
-      padding: 24px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.04);
-      margin-top: 10px;
-    }
-
-    .role-box-title {
-      font-size: 0.85rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      font-weight: 700;
-      color: var(--text-muted);
-      margin-bottom: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .role-cards-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-    }
-
-    .role-card {
-      border: 1.5px solid rgba(0, 0, 0, 0.08);
-      border-radius: 20px;
-      padding: 18px;
-      background: rgba(255, 255, 255, 0.85);
-      cursor: pointer;
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-      position: relative;
-      text-decoration: none;
-      color: var(--text-main);
-    }
-
-    .role-card:hover, .role-card.active {
-      border-color: var(--accent-black);
-      transform: translateY(-2px);
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
-    }
-
-    .role-badge {
-      display: inline-block;
-      font-size: 0.7rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      padding: 4px 10px;
-      border-radius: 9999px;
-      margin-bottom: 10px;
-    }
-    .role-badge.manager { background: #111; color: #fff; }
-    .role-badge.employee { background: #E0F2FE; color: #0369A1; }
-
-    .role-name {
-      font-size: 1.05rem;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-
-    .role-desc {
-      font-size: 0.78rem;
-      color: var(--text-muted);
-      line-height: 1.4;
-    }
-
-    .role-cred-tag {
-      margin-top: 10px;
-      font-size: 0.75rem;
-      font-family: monospace;
-      background: #F3F4F6;
-      padding: 3px 8px;
-      border-radius: 6px;
-      display: inline-block;
-      color: #374151;
-    }
-
-    /* ── Right Column: Animated Geometric Design & Glass Cards ───────── */
-    .visual-stage {
-      position: relative;
-      min-height: 540px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    /* Thin connecting architectural lines */
-    .wire-connector {
-      position: absolute;
-      stroke: rgba(0, 0, 0, 0.12);
-      stroke-width: 1.5;
-      fill: none;
-      pointer-events: none;
-    }
-
-    /* Animated sunburst rays (mirrors the reference image) */
-    .sunburst-motif {
-      width: 100px;
-      height: 100px;
-      position: absolute;
-      top: 180px;
-      left: 20px;
-      animation: rotateSunburst 28s linear infinite;
-    }
-    @keyframes rotateSunburst {
-      from { transform: rotate(0deg); }
-      to   { transform: rotate(360deg); }
-    }
-
-    /* Vibrant Orange Action Circle with diagonal arrow */
-    .coral-action-circle {
-      position: absolute;
-      top: 40px;
-      right: 220px;
-      width: 72px;
-      height: 72px;
-      background: var(--accent-coral);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 1.7rem;
-      font-weight: 700;
-      box-shadow: 0 14px 30px rgba(255, 85, 32, 0.35);
-      z-index: 10;
-      cursor: pointer;
-      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    .coral-action-circle:hover {
-      transform: scale(1.1) rotate(45deg);
-    }
-
-    /* Main Central Telemetry Glass Card */
-    .central-glass-card {
-      width: 340px;
-      background: linear-gradient(135deg, rgba(255,255,255,0.85) 0%, rgba(240,238,233,0.7) 100%);
-      backdrop-filter: var(--glass-blur);
-      -webkit-backdrop-filter: var(--glass-blur);
-      border: 1px solid rgba(255, 255, 255, 0.9);
-      border-radius: 36px;
-      padding: 32px 28px;
-      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.07);
-      position: relative;
-      z-index: 5;
-    }
-
-    .telemetry-indicator {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 24px;
-    }
-
-    .pulse-dot-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.8rem;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      color: var(--accent-emerald);
-    }
-
-    .live-pulse-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--accent-emerald);
-      position: relative;
-    }
-    .live-pulse-dot::after {
-      content: "";
-      position: absolute;
-      inset: -4px;
-      border-radius: 50%;
-      border: 2px solid var(--accent-emerald);
-      animation: pulsePing 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
-    }
-    @keyframes pulsePing {
-      0% { transform: scale(0.8); opacity: 1; }
-      100% { transform: scale(2.4); opacity: 0; }
-    }
-
-    .metric-hero-val {
-      font-size: 3.2rem;
-      font-weight: 800;
-      letter-spacing: -0.04em;
-      line-height: 1;
-      margin-bottom: 6px;
-    }
-    .metric-hero-val span {
-      font-size: 1.5rem;
-      font-weight: 600;
-      color: var(--text-muted);
-    }
-
-    .metric-sub-label {
-      font-size: 0.88rem;
-      color: var(--text-muted);
-      margin-bottom: 24px;
-    }
-
-    /* Live animated waveform canvas/svg */
-    .waveform-box {
-      width: 100%;
-      height: 60px;
-      margin-bottom: 20px;
-    }
-
-    .waveform-path {
-      stroke: var(--accent-black);
-      stroke-width: 2.5;
-      fill: none;
-      stroke-dasharray: 200;
-      animation: drawWave 3s ease-in-out infinite alternate;
-    }
-    @keyframes drawWave {
-      from { stroke-dashoffset: 40; }
-      to   { stroke-dashoffset: 0; }
-    }
-
-    /* Satellite Floating Pills */
-    .satellite-card-top {
-      position: absolute;
-      top: 15px;
-      left: 10px;
-      background: rgba(229, 226, 219, 0.85);
-      backdrop-filter: var(--glass-blur);
-      border: 1px solid rgba(255, 255, 255, 0.6);
-      border-radius: 20px;
-      padding: 16px 20px;
-      box-shadow: 0 16px 32px rgba(0,0,0,0.04);
-      z-index: 4;
-      width: 170px;
-    }
-    .satellite-card-top .code-symbol {
-      font-size: 1.2rem;
-      letter-spacing: 2px;
-      margin-bottom: 8px;
-    }
-    .satellite-card-top .desc {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      font-weight: 600;
-    }
-
-    .satellite-card-bottom {
-      position: absolute;
-      bottom: 20px;
-      left: -20px;
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: var(--glass-blur);
-      border: 1px solid rgba(0, 0, 0, 0.08);
-      border-radius: 22px;
-      padding: 18px 24px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.05);
-      z-index: 6;
-      width: 260px;
-    }
-    .satellite-card-bottom .stat-num {
-      font-size: 1.6rem;
-      font-weight: 800;
-      letter-spacing: -0.03em;
-    }
-    .satellite-card-bottom .stat-desc {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-
-    .satellite-downloads {
-      position: absolute;
-      top: 30px;
-      right: 10px;
-      text-align: right;
-    }
-    .satellite-downloads .val {
-      font-size: 1.8rem;
-      font-weight: 800;
       letter-spacing: -0.02em;
     }
-    .satellite-downloads .lbl {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+    .brand-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--cyan);
+      background: rgba(6, 182, 212, 0.12);
+      border: 1px solid rgba(6, 182, 212, 0.35);
+      padding: 3px 8px;
+      border-radius: 4px;
     }
-
-    /* ── Features Bottom Bar ─────────────────────────────────────────── */
-    .features-row {
+    .btn-primary {
+      background: #0891B2;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border: 1px solid var(--cyan);
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .btn-primary:hover { background: var(--cyan); }
+    .hero {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 32px;
-      padding: 48px 0 80px;
-      border-top: 1px solid rgba(0, 0, 0, 0.06);
-      margin-top: 24px;
+      grid-template-columns: 1.15fr 1fr;
+      gap: 48px;
+      padding: 72px 0 64px;
+      align-items: start;
     }
-
-    .feature-card {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
+    .kicker {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 16px;
     }
-
-    .feature-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+    h1 {
+      font-size: 2.8rem;
       font-weight: 700;
-      font-size: 1.05rem;
+      line-height: 1.12;
+      letter-spacing: -0.03em;
+      margin-bottom: 20px;
     }
-    .feature-icon-circle {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      border: 1px solid rgba(0,0,0,0.2);
+    .sub {
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.6;
+      max-width: 52ch;
+      margin-bottom: 32px;
+    }
+    .cta-row {
       display: flex;
+      gap: 12px;
       align-items: center;
-      justify-content: center;
+    }
+    .btn-secondary {
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      text-decoration: none;
+      padding: 10px 16px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--panel);
+    }
+    .spec-panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 24px;
+    }
+    .spec-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 14px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    .spec-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(30, 41, 59, 0.6);
+      font-size: 0.84rem;
+    }
+    .spec-row:last-child { border-bottom: none; }
+    .spec-key { color: var(--muted); }
+    .spec-val {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text);
       font-size: 0.8rem;
     }
-
-    .feature-text {
-      font-size: 0.88rem;
-      color: var(--text-muted);
+    .arch-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      padding: 40px 0 64px;
+      border-top: 1px solid var(--border);
+    }
+    .arch-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 20px;
+    }
+    .arch-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      color: var(--cyan);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    .arch-desc {
+      font-size: 0.84rem;
+      color: var(--muted);
       line-height: 1.5;
     }
-
-    /* ── Main Streamlit Dashboard Iframe Container ───────────────────── */
     #dashboard-view {
       display: none;
       position: fixed;
       inset: 0;
       width: 100vw;
       height: 100vh;
-      background: var(--bg-cream);
+      background: var(--bg);
       z-index: 9999;
     }
-    #dashboard-view iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-    }
+    #dashboard-view iframe { width: 100%; height: 100%; border: none; }
     #dashboard-view .back-bar {
       position: fixed;
-      top: 14px;
-      right: 18px;
+      top: 12px;
+      right: 16px;
       z-index: 10000;
     }
   </style>
 </head>
 <body>
-
   <div class="container" id="landing-view">
-    <!-- Navbar -->
     <nav>
-      <a href="#" class="logo-group">
-        <div class="logo-mark">🛡️</div>
-        <div class="logo-text">StockShield</div>
-      </a>
-      <ul class="nav-links">
-        <li><a href="#features">Platform</a></li>
-        <li><a href="#zones">Zones & Facilities</a></li>
-        <li><a href="#rbac">Access Roles</a></li>
-        <li><a href="#ml">AI Forecast</a></li>
-      </ul>
-      <div class="nav-actions">
-        <button class="btn-pill-black" onclick="launchDashboard()">
-          Launch Portal &rarr;
-        </button>
+      <div class="brand">
+        <span>STOCKSHIELD</span>
+        <span class="brand-tag">ESP32 / MQTT / INFLUXDB</span>
       </div>
+      <button class="btn-primary" onclick="launchDashboard()">Open Command Console</button>
     </nav>
 
-    <!-- Hero Section -->
     <section class="hero">
-      <div class="hero-left">
-        <div class="trial-pill">
-          <div class="arrow-node">&rarr;</div>
-          <span>Precision Industrial IoT & Cold-Chain Management</span>
-        </div>
-
-        <h1 class="hero-title">
-          Smart Telemetry<br/>& Stock Platform
-        </h1>
-
-        <p class="hero-sub">
-          Enterprise real-time monitoring across refrigerated vaults, dry storage racks, and chemical processing with role-based zone containment.
+      <div>
+        <div class="kicker">Industrial Warehouse Telemetry &amp; Depletion Forecasting</div>
+        <h1>Real-Time Shelf Load &amp; Cold-Chain Monitoring</h1>
+        <p class="sub">
+          Direct MQTT QoS-1 ingestion from physical ESP32 load cells (HX711) and environmental probes (DHT22) into Spring Boot, PostgreSQL, and InfluxDB—paired with zone-isolated operator access and Prophet runout forecasting.
         </p>
-
-        <!-- Direct Login Portal Gateway Button -->
-        <div style="margin-top: 36px; display: flex; gap: 16px; align-items: center;">
-          <button class="btn-pill-black" style="background: #FF5520; color: white; padding: 16px 36px; font-size: 1.05rem; font-weight: 700; box-shadow: 0 10px 25px rgba(255,85,32,0.35); border: none; cursor: pointer;" onclick="launchDashboard()">
-            Sign In to Command Center &rarr;
-          </button>
-          <a href="http://localhost:8501" target="_blank" style="color: #6B7280; font-size: 0.88rem; font-weight: 600; text-decoration: none; padding: 12px 18px; border: 1px solid rgba(0,0,0,0.1); border-radius: 999px;">
-            Open in New Tab &#x2197;
-          </a>
+        <div class="cta-row">
+          <button class="btn-primary" onclick="launchDashboard()">Sign In to Console &rarr;</button>
+          <a href="http://localhost:8501" target="_blank" class="btn-secondary">localhost:8501 &#x2197;</a>
         </div>
       </div>
 
-      <!-- Right Visual Column (Financilux Aesthetic) -->
-      <div class="hero-right visual-stage">
-        <!-- Sunburst Rotating SVG Motif -->
-        <svg class="sunburst-motif" viewBox="0 0 100 100">
-          <g stroke="#141416" stroke-width="2" stroke-linecap="round">
-            <line x1="50" y1="10" x2="50" y2="22" />
-            <line x1="50" y1="78" x2="50" y2="90" />
-            <line x1="10" y1="50" x2="22" y2="50" />
-            <line x1="78" y1="50" x2="90" y2="50" />
-            <line x1="22" y1="22" x2="30" y2="30" />
-            <line x1="70" y1="70" x2="78" y2="78" />
-            <line x1="22" y1="78" x2="30" y2="70" />
-            <line x1="70" y1="30" x2="78" y2="22" />
-            <line x1="35" y1="14" x2="39" y2="25" />
-            <line x1="61" y1="75" x2="65" y2="86" />
-            <line x1="14" y1="35" x2="25" y2="39" />
-            <line x1="75" y1="61" x2="86" y2="65" />
-            <line x1="65" y1="14" x2="61" y2="25" />
-            <line x1="39" y1="75" x2="35" y2="86" />
-            <line x1="86" y1="35" x2="75" y2="39" />
-            <line x1="25" y1="61" x2="14" y2="65" />
-          </g>
-        </svg>
-
-        <!-- Orange Circle with Diagonal Arrow -->
-        <div class="coral-action-circle" onclick="launchDashboard()" title="Enter System">
-          &#x2198;
+      <div class="spec-panel">
+        <div class="spec-header">
+          <span>SYSTEM TOPOLOGY</span>
+          <span style="color: #10B981;">PORT 1883 / 8080 / 8501</span>
         </div>
-
-        <!-- Top Left Pill Card -->
-        <div class="satellite-card-top">
-          <div class="code-symbol">&#x25C6;&#x25C7;&#x25C6;</div>
-          <div class="desc">Autonomous Threshold Calibration</div>
+        <div class="spec-row">
+          <span class="spec-key">Edge Node MCU</span>
+          <span class="spec-val">ESP32 DevKit V1 (HX711 + DHT22)</span>
         </div>
-
-        <!-- Top Right Dimension Callout -->
-        <div class="satellite-downloads">
-          <div class="val">18</div>
-          <div class="lbl">Active Sensors</div>
+        <div class="spec-row">
+          <span class="spec-key">Weight Topic</span>
+          <span class="spec-val">stockshield/shelf/{id}/weight</span>
         </div>
-
-        <!-- Central Telemetry Glass Card -->
-        <div class="central-glass-card">
-          <div class="telemetry-indicator">
-            <div class="pulse-dot-group">
-              <div class="live-pulse-dot"></div>
-              <span>Cold Vault Zone</span>
-            </div>
-            <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">LIVE QOS-1</span>
-          </div>
-
-          <div class="metric-hero-val">-18.4<span>&deg;C</span></div>
-          <div class="metric-sub-label">Sub-Zero Preservation &middot; Optimal Range (-22&deg;C to -15&deg;C)</div>
-
-          <!-- Animated Waveform -->
-          <svg class="waveform-box" viewBox="0 0 280 60">
-            <path class="waveform-path" d="M 0 30 Q 35 10, 70 30 T 140 30 T 210 30 T 280 30" />
-            <circle cx="140" cy="30" r="4" fill="#141416" />
-          </svg>
-
-          <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(0,0,0,0.06); padding-top: 14px;">
-            <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">Relative Humidity</div>
-            <div style="font-size: 0.95rem; font-weight: 700;">44.2 %</div>
-          </div>
+        <div class="spec-row">
+          <span class="spec-key">Environment Topic</span>
+          <span class="spec-val">stockshield/shelf/{id}/environment</span>
         </div>
-
-        <!-- Bottom Left Floating Stat -->
-        <div class="satellite-card-bottom">
-          <div class="stat-num">100k +</div>
-          <div class="stat-desc">Telemetry data points analyzed every 24 hours with Prophet & ARIMA models</div>
+        <div class="spec-row">
+          <span class="spec-key">Persistence Layer</span>
+          <span class="spec-val">PostgreSQL 16 + InfluxDB 2.7</span>
+        </div>
+        <div class="spec-row">
+          <span class="spec-key">Forecasting Engine</span>
+          <span class="spec-val">FastAPI + Prophet / AutoARIMA</span>
         </div>
       </div>
     </section>
 
-    <!-- Bottom Features Section (Mirrors Reference Footer) -->
-    <footer class="features-row" id="features">
-      <div class="feature-card">
-        <div class="feature-header">
-          <div class="feature-icon-circle">&#x260E;</div>
-          <span>Role-Based Containment</span>
-        </div>
-        <div class="feature-text">
-          Managers possess complete facility governance while operators remain strictly isolated to their assigned zone data.
-        </div>
+    <section class="arch-grid">
+      <div class="arch-card">
+        <div class="arch-title">01 / HARDWARE INGESTION</div>
+        <div class="arch-desc">5-second HX711 strain-gauge weight and DHT22 temperature/humidity packets streamed over MQTT to Eclipse Mosquitto.</div>
       </div>
-
-      <div class="feature-card">
-        <div class="feature-header">
-          <div class="feature-icon-circle">&#x25CE;</div>
-          <span>Sub-Second MQTT Telemetry</span>
-        </div>
-        <div class="feature-text">
-          Zero-delay message routing directly from ESP32 edge probes through Mosquitto to InfluxDB time-series storage.
-        </div>
+      <div class="arch-card">
+        <div class="arch-title">02 / THRESHOLD &amp; STALE ALERTS</div>
+        <div class="arch-desc">Immediate breach detection on incoming MQTT packets plus 60-second heartbeat timeouts for disconnected ESP32 nodes.</div>
       </div>
-
-      <div class="feature-card">
-        <div class="feature-header">
-          <div class="feature-icon-circle">&#x229E;</div>
-          <span>Continuous Machine Learning</span>
-        </div>
-        <div class="feature-text">
-          Automatic 6-hour retraining adapts safety stock thresholds to seasonal demand and physical environmental drift.
-        </div>
+      <div class="arch-card">
+        <div class="arch-title">03 / ZONE RBAC CONTAINMENT</div>
+        <div class="arch-desc">Facility managers govern global thresholds and user accounts while operators are scoped strictly to their assigned storage zone.</div>
       </div>
-    </footer>
+    </section>
   </div>
 
-  <!-- Fullscreen Dashboard Iframe -->
   <div id="dashboard-view">
     <div class="back-bar">
-      <button class="btn-pill-black" onclick="closeDashboard()">
-        &larr; Exit to Portal
-      </button>
+      <button class="btn-primary" onclick="closeDashboard()">&larr; Exit Console</button>
     </div>
-    <iframe id="app-frame" src="" title="StockShield App"></iframe>
+    <iframe id="app-frame" src="" title="StockShield Console"></iframe>
   </div>
 
   <script>
     function launchDashboard() {
-      const dashboardView = document.getElementById('dashboard-view');
-      const appFrame = document.getElementById('app-frame');
-      
-      appFrame.src = "http://localhost:8501";
-      dashboardView.style.display = "block";
+      document.getElementById('app-frame').src = "http://localhost:8501";
+      document.getElementById('dashboard-view').style.display = "block";
     }
-
     function closeDashboard() {
-      const dashboardView = document.getElementById('dashboard-view');
-      const appFrame = document.getElementById('app-frame');
-      dashboardView.style.display = "none";
-      appFrame.src = "";
+      document.getElementById('dashboard-view').style.display = "none";
+      document.getElementById('app-frame').src = "";
     }
   </script>
 </body>

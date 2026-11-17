@@ -15,7 +15,7 @@ from utils.ui_theme import (
     TRACE_EMERALD,
 )
 
-st.set_page_config(page_title="AI Model Studio · StockShield", page_icon="🧠", layout="wide")
+st.set_page_config(page_title="Model Studio · StockShield", layout="wide")
 inject_global_css()
 
 # ─── RBAC Access Gate ─────────────────────────────────────────────────────────
@@ -26,27 +26,29 @@ if not user or "error" in user:
     section[data-testid="stSidebar"], div[data-testid="collapsedControl"] { display: none !important; }
     </style>
     """, unsafe_allow_html=True)
-    st.warning("🔒 Please sign in from the main portal first.")
+    st.warning("Please authenticate on the main console first.")
     st.stop()
 
 sidebar_user_profile(user)
 if user.get("role", "").upper() == "EMPLOYEE":
-        render_breadcrumbs(["🛡️ StockShield", "🧠 AI Model Studio", "Access Restricted"])
-        st.error("🔒 **Access Restricted to Chief Facility Managers**")
-        st.markdown(f"""
-<div class="glass-card" style="padding: 36px; text-align: center;">
-  <div style="font-size: 2.8rem; margin-bottom: 12px;">🛡️🔐</div>
-  <h3 style="color: #141416;">Manager Permissions Required</h3>
-  <p style="color: #6B7280; max-width: 540px; margin: 10px auto;">
-    You are signed in as <b>{user.get('fullName', user.get('username'))}</b> (Operator scoped to <b>{user.get('assignedLocation')}</b>).
-    Algorithmic training, Prophet fitting, and mathematical parameter modifications are restricted to facility managers.
+    render_breadcrumbs(["STOCKSHIELD", "MODEL STUDIO", "ACCESS RESTRICTED"])
+    st.error("ACCESS RESTRICTED: Facility manager credentials required.")
+    st.markdown(f"""
+<div class="glass-card" style="padding: 28px; text-align: center;">
+  <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: #EF4444; margin-bottom: 8px;">
+    ERROR: 403_FORBIDDEN
+  </div>
+  <h3 style="color: #F8FAFC; margin-bottom: 6px;">Manager Permissions Required</h3>
+  <p style="color: #94A3B8; max-width: 540px; margin: 0 auto; font-size: 0.85rem;">
+    Authenticated as <strong>{user.get('fullName', user.get('username'))}</strong> (Scoped to {user.get('assignedLocation') or 'Unassigned'}).
+    Prophet model training and forecasting parameters are restricted to facility managers.
   </p>
 </div>
 """, unsafe_allow_html=True)
-        st.stop()
+    st.stop()
 
 # ─── Sidebar ──────────────────────────────────────────────────────────────────
-st.sidebar.markdown('<div class="section-header">🏢 Organization</div>', unsafe_allow_html=True)
+st.sidebar.markdown('<div class="section-header">Organization</div>', unsafe_allow_html=True)
 tenants = api.fetch_tenants()
 tenant_map = {f"{t['name']} ({t.get('industry', 'general')})": t['id'] for t in tenants}
 active_tenant_id = st.sidebar.selectbox("Organization / Tenant", list(tenant_map.values()), index=0)
@@ -59,12 +61,12 @@ sidebar_tenant_card(
 st.sidebar.divider()
 
 # ─── Breadcrumbs & Header ─────────────────────────────────────────────────────
-render_breadcrumbs(["🛡️ StockShield", selected_tenant.get('name', 'Universal IoT'), "🧠 AI Model Studio"])
+render_breadcrumbs(["STOCKSHIELD", selected_tenant.get('name', 'FACILITY').upper(), "MODEL STUDIO"])
 
 header_banner(
-    title="Custom AI Model Studio",
-    tenant_name=selected_tenant.get('name', 'Universal IoT'),
-    subtitle="Train custom forecasting & anomaly-detection models on your own telemetry data",
+    title="Depletion & Anomaly Forecasting Studio",
+    tenant_name=f"TENANT: {active_tenant_id}",
+    subtitle="Train custom Prophet models on InfluxDB telemetry to predict stock runouts and safe operational envelopes",
     telemetry_online=True,
     sector=selected_tenant.get('industry', ''),
     ml_state="STUDIO",
@@ -76,13 +78,13 @@ available_codes = [s['code'] for s in sensor_types] if sensor_types else [
     "temperature", "humidity", "pressure", "vibration", "ph", "weight"
 ]
 
-tabs = st.tabs(["🚀 Train New Model", "🔮 Forecast & Anomaly Detection", "📚 Model Repository"])
+tabs = st.tabs(["Train Model", "Forecast & Anomaly Detection", "Model Repository"])
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TAB 1: Train New Model
 # ══════════════════════════════════════════════════════════════════════════════
 with tabs[0]:
-    section_header("1 · Select Sensor Metric to Train")
+    section_header("1 / Target Sensor Metric")
     col_s1, col_s2 = st.columns(2)
     with col_s1:
         target_sensor = st.selectbox("Sensor Type", available_codes)
@@ -92,7 +94,7 @@ with tabs[0]:
         category = s_match.get('category', 'metric') if s_match else 'metric'
         st.markdown(f"""
 <div class="glass-card" style="padding:12px 16px;">
-  <div style="font-size:0.75rem;color:#64748B;margin-bottom:6px;">Selected Target</div>
+  <div style="font-family: 'JetBrains Mono', monospace; font-size:0.72rem; color:#64748B; margin-bottom:4px;">TARGET SPECIFICATION</div>
   <div>
     {badge(target_sensor, 'cyan')}
     &nbsp;{badge(unit or 'unit', 'emerald')}
@@ -102,9 +104,9 @@ with tabs[0]:
 """, unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
-    section_header("2 · Data Source")
+    section_header("2 / Telemetry Data Source")
     data_source_mode = st.radio(
-        "Choose training data source:",
+        "Training data stream:",
         ["Streamed InfluxDB Live Telemetry", "Upload Custom Historical CSV Dataset"],
         horizontal=True,
     )
@@ -112,28 +114,28 @@ with tabs[0]:
     if data_source_mode == "Upload Custom Historical CSV Dataset":
         st.markdown("""
 <div class="glass-card" style="padding:16px;">
-  <div style="font-size:0.82rem;color:#94A3B8;">
-    Upload your organization's CSV data. Required columns:<br>
-    &nbsp;• <code style="color:#00E5FF;">timestamp</code> (or <code style="color:#00E5FF;">ds</code>)<br>
-    &nbsp;• <code style="color:#00E5FF;">value</code> (or <code style="color:#00E5FF;">y</code>)<br>
-    Optional: <code style="color:#10B981;">locationId</code>
+  <div style="font-size:0.82rem; color:#94A3B8;">
+    Upload CSV dataset. Required schema:<br>
+    &nbsp;• <code>timestamp</code> (or <code>ds</code>)<br>
+    &nbsp;• <code>value</code> (or <code>y</code>)<br>
+    Optional: <code>locationId</code>
   </div>
 </div>
 """, unsafe_allow_html=True)
-        uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
+        uploaded_file = st.file_uploader("Upload CSV", type=["csv"])
         if uploaded_file is not None:
             try:
                 preview_df = pd.read_csv(uploaded_file)
-                st.dataframe(preview_df.head(5), use_container_width=True)
-                st.success(f"Loaded CSV with {len(preview_df)} rows — columns: {list(preview_df.columns)}")
+                st.dataframe(preview_df.head(5), use_container_width=True, hide_index=True)
+                st.success(f"Loaded {len(preview_df)} records: {list(preview_df.columns)}")
                 uploaded_file.seek(0)
             except Exception as e:
                 st.error(f"Error reading CSV: {e}")
     else:
-        training_window = st.selectbox("Historical Window to Train On", ["7d", "14d", "30d", "60d", "90d"], index=2)
+        training_window = st.selectbox("Historical Training Window", ["7d", "14d", "30d", "60d", "90d"], index=2)
 
     st.markdown("<br>", unsafe_allow_html=True)
-    section_header("3 · Model Hyperparameters")
+    section_header("3 / Model Hyperparameters")
     hp_c1, hp_c2 = st.columns(2)
     with hp_c1:
         service_level = st.slider(
@@ -146,16 +148,16 @@ with tabs[0]:
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    if st.button("🚀 Train Custom Model Now", type="primary", use_container_width=True):
-        with st.spinner(f"Training AI model on {target_sensor} data for {selected_tenant.get('name')}..."):
+    if st.button("Execute Training Run", type="primary", use_container_width=True):
+        with st.spinner(f"Fitting Prophet model on {target_sensor} data..."):
             try:
                 if data_source_mode == "Upload Custom Historical CSV Dataset":
                     if uploaded_file is None:
-                        st.error("Please select a CSV file first.")
+                        st.error("Select a CSV file first.")
                         st.stop()
                     csv_bytes = uploaded_file.read()
                     up_res = api.upload_training_csv(active_tenant_id, target_sensor, csv_bytes, uploaded_file.name)
-                    st.toast(f"Imported {up_res.get('rows_imported', 0)} data points into InfluxDB!", icon="📥")
+                    st.toast(f"Imported {up_res.get('rows_imported', 0)} data points into InfluxDB!")
                     train_win = "90d"
                 else:
                     train_win = training_window
@@ -167,14 +169,14 @@ with tabs[0]:
                     service_level=service_level,
                 )
 
-                st.success("🎉 Model Trained Successfully!")
+                st.success("Model fitting completed.")
 
-                section_header("📊 Training Results")
+                section_header("Training Convergence Metrics")
                 rc1, rc2, rc3, rc4 = st.columns(4)
                 with rc1:
                     st.metric("Model Algorithm", train_result.get("model_type", "Prophet").upper())
                 with rc2:
-                    st.metric("Data Points Used", train_result.get("data_points_used", 0))
+                    st.metric("Points Processed", train_result.get("data_points_used", 0))
                 with rc3:
                     st.metric("In-Sample MAE", f"{train_result.get('mae', 0):.4f}")
                 with rc4:
@@ -182,27 +184,27 @@ with tabs[0]:
 
                 thresh = train_result.get("learned_thresholds", {})
                 st.markdown("<br>", unsafe_allow_html=True)
-                section_header("🎯 Dynamic Thresholds Discovered from Your Data")
+                section_header("Learned Operational Bounds")
                 tc1, tc2, tc3, tc4, tc5 = st.columns(5)
                 with tc1:
-                    st.metric("Safe Min",       f"{thresh.get('min_safe', '-')} {unit}")
+                    st.metric("Min Safe",       f"{thresh.get('min_safe', '-')} {unit}")
                 with tc2:
-                    st.metric("Safe Max",       f"{thresh.get('max_safe', '-')} {unit}")
+                    st.metric("Max Safe",       f"{thresh.get('max_safe', '-')} {unit}")
                 with tc3:
-                    st.metric("Critical Lower", f"{thresh.get('critical_min', '-')} {unit}")
+                    st.metric("Crit Lower",    f"{thresh.get('critical_min', '-')} {unit}")
                 with tc4:
-                    st.metric("Critical Upper", f"{thresh.get('critical_max', '-')} {unit}")
+                    st.metric("Crit Upper",    f"{thresh.get('critical_max', '-')} {unit}")
                 with tc5:
-                    st.metric("Baseline Mean",  f"{thresh.get('mean', '-')} {unit}")
+                    st.metric("Mean Baseline",  f"{thresh.get('mean', '-')} {unit}")
 
-                if s_match and st.button("💾 Apply Learned Thresholds to Live Alert System"):
+                if s_match and st.button("Apply Learned Bounds to Alert Engine"):
                     api.update_sensor_type(s_match["id"], {
                         "minSafe":     thresh.get("min_safe"),
                         "maxSafe":     thresh.get("max_safe"),
                         "criticalMin": thresh.get("critical_min"),
                         "criticalMax": thresh.get("critical_max"),
                     })
-                    st.success("Updated live sensor thresholds in database!")
+                    st.success("Synchronized thresholds to PostgreSQL registry.")
 
             except Exception as e:
                 st.error(f"Training failed: {e}")
@@ -212,10 +214,10 @@ with tabs[0]:
 # TAB 2: Forecast & Anomaly Detection
 # ══════════════════════════════════════════════════════════════════════════════
 with tabs[1]:
-    section_header("🔮 Run Forecast Using Your Trained Model")
+    section_header("Run Model Inference")
     f_c1, f_c2 = st.columns(2)
     with f_c1:
-        f_sensor = st.selectbox("Select Model to Evaluate", available_codes, key="eval_sensor")
+        f_sensor = st.selectbox("Trained Model Target", available_codes, key="eval_sensor")
     with f_c2:
         f_horizon = st.selectbox(
             "Forecast Horizon", [12, 24, 48, 72, 168], index=1,
@@ -223,7 +225,7 @@ with tabs[1]:
         )
 
     if st.button("Generate Forecast", type="primary"):
-        with st.spinner("Generating AI prediction with user-trained model..."):
+        with st.spinner("Executing inference pipeline..."):
             try:
                 pred_result = api.predict_custom_model(
                     tenant_id=active_tenant_id,
@@ -231,23 +233,23 @@ with tabs[1]:
                     horizon_hours=f_horizon,
                 )
 
-                section_header(f"Forecast Results — {pred_result.get('model_used', '').upper()} Model")
+                section_header(f"Inference Results // {pred_result.get('model_used', '').upper()}")
 
                 if pred_result.get("anomaly_detected"):
                     st.markdown(f"""
-<div class="glass-card" style="border-color:rgba(239,68,68,0.45);background:rgba(239,68,68,0.08);">
-  <span style="color:#EF4444;font-weight:700;">⚠️ ANOMALY DETECTED</span>
-  <span style="color:#94A3B8;font-size:0.85rem;margin-left:12px;">
-    Latest reading ({pred_result.get('latest_reading')}) breaches learned model boundaries.
+<div class="glass-card" style="border-left: 3px solid #EF4444;">
+  <span style="color:#EF4444; font-weight:600; font-family: 'JetBrains Mono', monospace;">ANOMALY_BREACH</span>
+  <span style="color:#94A3B8; font-size:0.85rem; margin-left:12px;">
+    Latest reading ({pred_result.get('latest_reading')}) exceeds learned model envelope.
   </span>
 </div>
 """, unsafe_allow_html=True)
                 else:
                     st.markdown(f"""
-<div class="glass-card" style="border-color:rgba(16,185,129,0.45);background:rgba(16,185,129,0.07);">
-  <span style="color:#10B981;font-weight:700;">✅ Normal Operation</span>
-  <span style="color:#94A3B8;font-size:0.85rem;margin-left:12px;">
-    Latest reading ({pred_result.get('latest_reading')}) is within learned safe envelope.
+<div class="glass-card" style="border-left: 3px solid #10B981;">
+  <span style="color:#10B981; font-weight:600; font-family: 'JetBrains Mono', monospace;">NOMINAL_ENVELOPE</span>
+  <span style="color:#94A3B8; font-size:0.85rem; margin-left:12px;">
+    Latest reading ({pred_result.get('latest_reading')}) is within nominal confidence interval.
   </span>
 </div>
 """, unsafe_allow_html=True)
@@ -259,7 +261,6 @@ with tabs[1]:
 
                     fig = go.Figure()
 
-                    # Confidence envelope
                     fig.add_trace(go.Scatter(
                         x=f_df['timestamp'].tolist() + f_df['timestamp'].tolist()[::-1],
                         y=f_df['upper_bound'].tolist() + f_df['lower_bound'].tolist()[::-1],
@@ -270,34 +271,33 @@ with tabs[1]:
                         name="Confidence Interval",
                     ))
 
-                    # Forecast line
                     fig.add_trace(go.Scatter(
                         x=f_df['timestamp'],
                         y=f_df['predicted_value'],
                         mode='lines+markers',
-                        name='AI Predicted Value',
-                        line=dict(color=TRACE_EMERALD, width=3),
-                        marker=dict(size=5, color=TRACE_EMERALD),
+                        name='Predicted Trajectory',
+                        line=dict(color=TRACE_EMERALD, width=2.5),
+                        marker=dict(size=4, color=TRACE_EMERALD),
                     ))
 
                     fig.update_layout(
                         **PLOTLY_LAYOUT_DEFAULTS,
-                        title=f"Forecasted Trajectory — '{f_sensor}' (Next {f_horizon} Hours)",
-                        xaxis_title="Future Timestamp",
+                        title=f"{f_sensor.upper()} // Forecast ({f_horizon} Hours)",
+                        xaxis_title="Future Timestamp (UTC)",
                         yaxis_title="Predicted Value",
-                        height=420,
+                        height=380,
                     )
                     st.plotly_chart(fig, use_container_width=True)
 
             except Exception as e:
-                st.warning(f"Could not generate forecast: {e}. Ensure you have trained a model for '{f_sensor}' first.")
+                st.warning(f"Could not generate forecast: {e}. Ensure a model has been trained for '{f_sensor}'.")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TAB 3: Model Repository
 # ══════════════════════════════════════════════════════════════════════════════
 with tabs[2]:
-    section_header(f"📚 Saved AI Models — {selected_tenant.get('name', active_tenant_id)}")
+    section_header("Artifact Repository")
     try:
         models = api.fetch_tenant_models(active_tenant_id)
         if models:
@@ -305,24 +305,21 @@ with tabs[2]:
             for m in models:
                 thresh = m.get("learned_thresholds", {})
                 m_list.append({
-                    "Sensor Metric": m.get("sensor_type"),
+                    "Target Metric": m.get("sensor_type"),
                     "Algorithm":     m.get("model_type", "").upper(),
-                    "Trained At":    m.get("trained_at", m.get("last_trained")),
+                    "Trained At":    str(m.get("trained_at", m.get("last_trained", "")))[:19],
                     "Data Points":   m.get("data_points_used"),
                     "MAE":           m.get("mae"),
                     "RMSE":          m.get("rmse"),
-                    "Learned Min":   thresh.get("min_safe", "—"),
-                    "Learned Max":   thresh.get("max_safe", "—"),
+                    "Min Safe":      thresh.get("min_safe", "—"),
+                    "Max Safe":      thresh.get("max_safe", "—"),
                 })
             st.dataframe(pd.DataFrame(m_list), use_container_width=True, hide_index=True)
         else:
-            st.markdown(f"""
-<div class="glass-card" style="text-align:center;padding:48px;">
-  <div style="font-size:2.5rem;margin-bottom:12px;">🧠</div>
-  <div style="color:#94A3B8;font-size:0.88rem;">
-    No custom models trained yet for <strong style="color:#F8FAFC;">{selected_tenant.get('name')}</strong>.
-    <br>Use the <strong style="color:#00E5FF;">Train New Model</strong> tab to get started.
-  </div>
+            st.markdown("""
+<div class="glass-card" style="text-align:center; padding:36px;">
+  <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #64748B;">REPOSITORY EMPTY</div>
+  <div style="color: #94A3B8; font-size: 0.85rem; margin-top: 4px;">Zero custom model artifacts fitted for this tenant.</div>
 </div>
 """, unsafe_allow_html=True)
     except Exception as e:
