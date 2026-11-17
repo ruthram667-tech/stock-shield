@@ -1,30 +1,32 @@
 """
-ui_theme.py — StockShield Industrial Telemetry Console
-Clean dark-slate engineering interface (#0B0F17), 1px structural borders,
-monospace telemetry readouts, and zero emoji clutter.
+ui_theme.py — StockShield Financilux-Inspired Warm Cream Theme
+Warm beige backgrounds, glassmorphism panels, smooth rounded edges,
+Inter font family, clean professional aesthetic.
 """
 
 import streamlit as st
 
 # ─── Palette Constants ────────────────────────────────────────────────────────
-CYAN    = "#06B6D4"
-EMERALD = "#10B981"
-AMBER   = "#F59E0B"
-CRIMSON = "#EF4444"
-CORAL   = "#06B6D4"  # Mapped to cyan for backward compatibility
-BG      = "#0B0F17"
-SURFACE = "#111827"
-TEXT    = "#F8FAFC"
-MUTED   = "#94A3B8"
+CREAM       = "#F5F0EB"       # Main background
+WARM_WHITE  = "#FDFCFA"       # Card / surface
+SAND        = "#E8E0D8"       # Borders
+CHARCOAL    = "#2D2A26"       # Primary text
+MUTED       = "#7A7570"       # Secondary text
+ACCENT      = "#C8956C"       # Warm accent (copper/terracotta)
+ACCENT_DARK = "#A87B55"       # Accent hover
+SUCCESS     = "#5B9A6F"       # Green
+WARNING     = "#D4A843"       # Amber
+DANGER      = "#C7544A"       # Red
+INFO        = "#6B8FA3"       # Cool blue-gray
 
 _CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 .stApp {
-    background-color: #0B0F17 !important;
+    background-color: #F5F0EB !important;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
-    color: #F8FAFC !important;
+    color: #2D2A26 !important;
 }
 
 .block-container {
@@ -36,59 +38,65 @@ _CSS = """
 h1, h2, h3, h4, h5, h6 {
     font-family: 'Inter', sans-serif !important;
     font-weight: 600 !important;
-    color: #F8FAFC !important;
+    color: #2D2A26 !important;
     letter-spacing: -0.02em !important;
 }
 
 p, span, label, div {
-    color: #E2E8F0;
+    color: #4A4541;
 }
 
 code {
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: 0.8rem !important;
-    color: #38BDF8 !important;
-    background: rgba(56, 189, 248, 0.1) !important;
-    padding: 2px 6px !important;
-    border-radius: 4px !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 0.82rem !important;
+    color: #A87B55 !important;
+    background: rgba(200, 149, 108, 0.12) !important;
+    padding: 2px 8px !important;
+    border-radius: 6px !important;
 }
 
 /* ── Sidebar ─────────────────────────────────────────────────────────────── */
 section[data-testid="stSidebar"] {
-    background-color: #0F172A !important;
-    border-right: 1px solid #1E293B !important;
+    background-color: #FDFCFA !important;
+    border-right: 1px solid #E8E0D8 !important;
 }
 
 section[data-testid="stSidebar"] .stMarkdown p,
 section[data-testid="stSidebar"] label,
 section[data-testid="stSidebar"] .stSelectbox label {
-    color: #94A3B8 !important;
-    font-size: 0.75rem !important;
-    font-weight: 600 !important;
+    color: #7A7570 !important;
+    font-size: 0.78rem !important;
+    font-weight: 500 !important;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.04em;
 }
 
-/* ── Engineering Panel Card ──────────────────────────────────────────────── */
+/* ── Glassmorphism Card ──────────────────────────────────────────────────── */
 .glass-card {
-    background: #111827;
-    border: 1px solid #1E293B;
-    border-radius: 8px;
+    background: rgba(253, 252, 250, 0.72);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(232, 224, 216, 0.6);
+    border-radius: 16px;
     padding: 20px;
     margin-bottom: 1rem;
+    box-shadow: 0 4px 24px rgba(45, 42, 38, 0.06);
 }
 
 /* ── Top Console Header Bar ──────────────────────────────────────────────── */
 .header-card {
-    background: #111827;
-    border: 1px solid #1E293B;
-    border-left: 3px solid #06B6D4;
-    border-radius: 8px;
-    padding: 18px 24px;
+    background: rgba(253, 252, 250, 0.75);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid #E8E0D8;
+    border-left: 4px solid #C8956C;
+    border-radius: 16px;
+    padding: 20px 28px;
     margin-bottom: 1.25rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    box-shadow: 0 2px 16px rgba(45, 42, 38, 0.05);
 }
 .header-left {
     display: flex;
@@ -98,20 +106,20 @@ section[data-testid="stSidebar"] .stSelectbox label {
 .header-title {
     font-size: 1.25rem;
     font-weight: 600;
-    color: #F8FAFC;
+    color: #2D2A26;
     letter-spacing: -0.02em;
     margin: 0;
 }
 .header-tenant {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Inter', sans-serif;
     font-size: 0.78rem;
-    color: #06B6D4;
+    color: #C8956C;
     font-weight: 500;
     margin: 0;
 }
 .header-subtitle {
-    font-size: 0.8rem;
-    color: #64748B;
+    font-size: 0.82rem;
+    color: #7A7570;
     margin: 0;
 }
 .header-right {
@@ -125,197 +133,294 @@ section[data-testid="stSidebar"] .stSelectbox label {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 4px 10px;
-    border-radius: 4px;
-    font-size: 0.7rem;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.72rem;
     font-weight: 600;
-    letter-spacing: 0.05em;
-    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.03em;
+    font-family: 'Inter', sans-serif;
     text-transform: uppercase;
     white-space: nowrap;
 }
 .badge-cyan, .badge-coral {
-    background: rgba(6, 182, 212, 0.12);
-    border: 1px solid rgba(6, 182, 212, 0.35);
-    color: #22D3EE;
+    background: rgba(107, 143, 163, 0.12);
+    border: 1px solid rgba(107, 143, 163, 0.3);
+    color: #5A8092;
 }
 .badge-emerald {
-    background: rgba(16, 185, 129, 0.12);
-    border: 1px solid rgba(16, 185, 129, 0.35);
-    color: #34D399;
+    background: rgba(91, 154, 111, 0.12);
+    border: 1px solid rgba(91, 154, 111, 0.3);
+    color: #4E8A60;
 }
 .badge-amber {
-    background: rgba(245, 158, 11, 0.12);
-    border: 1px solid rgba(245, 158, 11, 0.35);
-    color: #FBBF24;
+    background: rgba(212, 168, 67, 0.12);
+    border: 1px solid rgba(212, 168, 67, 0.3);
+    color: #B8922E;
 }
 .badge-crimson {
-    background: rgba(239, 68, 68, 0.12);
-    border: 1px solid rgba(239, 68, 68, 0.35);
-    color: #F87171;
+    background: rgba(199, 84, 74, 0.12);
+    border: 1px solid rgba(199, 84, 74, 0.3);
+    color: #B84840;
 }
 
 /* ── Sidebar Cards ───────────────────────────────────────────────── */
 .tenant-card, .user-profile-card {
-    background: #111827;
-    border: 1px solid #1E293B;
-    border-radius: 6px;
-    padding: 12px 14px;
+    background: rgba(245, 240, 235, 0.65);
+    backdrop-filter: blur(10px);
+    border: 1px solid #E8E0D8;
+    border-radius: 12px;
+    padding: 14px 16px;
     margin: 8px 0;
 }
 .tenant-card-label {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.65rem;
-    color: #64748B;
-    letter-spacing: 0.08em;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.68rem;
+    color: #7A7570;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     margin-bottom: 4px;
 }
 .tenant-card-name, .user-name {
-    font-size: 0.9rem;
+    font-size: 0.92rem;
     font-weight: 600;
-    color: #F8FAFC;
+    color: #2D2A26;
     margin-bottom: 6px;
 }
 .tenant-meta-row {
     display: flex;
     justify-content: space-between;
-    font-size: 0.72rem;
-    padding: 2px 0;
+    font-size: 0.74rem;
+    padding: 3px 0;
 }
-.tenant-meta-key { color: #64748B; }
+.tenant-meta-key { color: #7A7570; }
 .tenant-meta-val, .tenant-meta-val-industry {
-    font-family: 'JetBrains Mono', monospace;
-    color: #38BDF8;
-    font-size: 0.7rem;
+    font-family: 'Inter', sans-serif;
+    color: #C8956C;
+    font-size: 0.72rem;
+    font-weight: 500;
 }
 
 .user-role-tag {
     display: inline-block;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.65rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.68rem;
     font-weight: 600;
     text-transform: uppercase;
-    padding: 2px 8px;
-    border-radius: 4px;
+    padding: 3px 10px;
+    border-radius: 20px;
 }
 .user-role-tag.manager {
-    background: rgba(6, 182, 212, 0.15);
-    border: 1px solid rgba(6, 182, 212, 0.4);
-    color: #22D3EE;
+    background: rgba(200, 149, 108, 0.15);
+    border: 1px solid rgba(200, 149, 108, 0.35);
+    color: #A87B55;
 }
 .user-role-tag.employee {
-    background: rgba(148, 163, 184, 0.15);
-    border: 1px solid rgba(148, 163, 184, 0.3);
-    color: #CBD5E1;
+    background: rgba(122, 117, 112, 0.1);
+    border: 1px solid rgba(122, 117, 112, 0.25);
+    color: #7A7570;
 }
 .user-location-info {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.72rem;
-    color: #94A3B8;
-    background: #0B0F17;
-    border: 1px solid #1E293B;
-    padding: 6px 10px;
-    border-radius: 4px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.74rem;
+    color: #7A7570;
+    background: #F5F0EB;
+    border: 1px solid #E8E0D8;
+    padding: 6px 12px;
+    border-radius: 8px;
     margin-top: 8px;
 }
 
 /* ── KPI Metric Containers ───────────────────────────────────────────────── */
 div[data-testid="metric-container"] {
-    background: #111827 !important;
-    border: 1px solid #1E293B !important;
-    border-radius: 8px !important;
-    padding: 16px 18px !important;
+    background: rgba(253, 252, 250, 0.72) !important;
+    backdrop-filter: blur(12px) !important;
+    border: 1px solid #E8E0D8 !important;
+    border-radius: 14px !important;
+    padding: 18px 20px !important;
+    box-shadow: 0 2px 12px rgba(45, 42, 38, 0.04) !important;
 }
 div[data-testid="metric-container"] label {
-    color: #64748B !important;
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: 0.7rem !important;
-    letter-spacing: 0.06em !important;
+    color: #7A7570 !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 0.72rem !important;
+    letter-spacing: 0.04em !important;
     text-transform: uppercase !important;
 }
 div[data-testid="metric-container"] [data-testid="stMetricValue"] {
-    color: #F8FAFC !important;
-    font-family: 'JetBrains Mono', monospace !important;
+    color: #2D2A26 !important;
+    font-family: 'Inter', sans-serif !important;
     font-size: 1.65rem !important;
     font-weight: 600 !important;
 }
 div[data-testid="metric-container"] [data-testid="stMetricDelta"] {
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: 0.72rem !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 0.74rem !important;
 }
 
 /* ── Inputs, Buttons & Tabs ──────────────────────────────────────────────── */
 .stTextInput input, .stNumberInput input, .stSelectbox [data-baseweb="select"] > div {
-    background-color: #0B0F17 !important;
-    color: #F8FAFC !important;
-    border: 1px solid #334155 !important;
-    border-radius: 6px !important;
+    background-color: #FDFCFA !important;
+    color: #2D2A26 !important;
+    border: 1px solid #E8E0D8 !important;
+    border-radius: 10px !important;
+}
+.stTextInput input:focus, .stNumberInput input:focus {
+    border-color: #C8956C !important;
+    box-shadow: 0 0 0 2px rgba(200, 149, 108, 0.2) !important;
 }
 .stButton > button {
-    border-radius: 6px !important;
-    font-weight: 600 !important;
+    border-radius: 10px !important;
+    font-weight: 500 !important;
     font-size: 0.84rem !important;
-    border: 1px solid #334155 !important;
-    background: #1E293B !important;
-    color: #F8FAFC !important;
+    border: 1px solid #E8E0D8 !important;
+    background: #FDFCFA !important;
+    color: #2D2A26 !important;
+    transition: all 0.2s ease !important;
+}
+.stButton > button:hover {
+    background: #F5F0EB !important;
+    border-color: #C8956C !important;
 }
 .stButton > button[kind="primary"] {
-    background: #0891B2 !important;
-    border-color: #06B6D4 !important;
-    color: #FFFFFF !important;
+    background: #2D2A26 !important;
+    border-color: #2D2A26 !important;
+    color: #FDFCFA !important;
 }
 .stButton > button[kind="primary"]:hover {
-    background: #06B6D4 !important;
+    background: #4A4541 !important;
 }
 
 .stTabs [data-baseweb="tab-list"] {
-    background: #0F172A !important;
-    border: 1px solid #1E293B !important;
-    border-radius: 6px !important;
-    padding: 3px !important;
+    background: rgba(253, 252, 250, 0.6) !important;
+    border: 1px solid #E8E0D8 !important;
+    border-radius: 12px !important;
+    padding: 4px !important;
     gap: 4px !important;
 }
 .stTabs [data-baseweb="tab"] {
-    border-radius: 4px !important;
-    color: #64748B !important;
+    border-radius: 8px !important;
+    color: #7A7570 !important;
     font-size: 0.82rem !important;
     font-weight: 500 !important;
-    padding: 6px 14px !important;
+    padding: 8px 16px !important;
 }
 .stTabs [aria-selected="true"] {
-    background: #1E293B !important;
-    color: #F8FAFC !important;
+    background: #2D2A26 !important;
+    color: #FDFCFA !important;
     font-weight: 600 !important;
 }
 
 .section-header {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.72rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.74rem;
     font-weight: 600;
-    color: #94A3B8;
-    letter-spacing: 0.08em;
+    color: #7A7570;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     margin-bottom: 12px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid #1E293B;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #E8E0D8;
 }
 
 .breadcrumbs-container {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 4px 10px;
-    margin-bottom: 10px;
-    background: #0F172A;
-    border: 1px solid #1E293B;
-    border-radius: 4px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.7rem;
+    padding: 6px 14px;
+    margin-bottom: 12px;
+    background: rgba(253, 252, 250, 0.6);
+    backdrop-filter: blur(8px);
+    border: 1px solid #E8E0D8;
+    border-radius: 20px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.72rem;
 }
-.breadcrumb-item { color: #64748B; }
-.breadcrumb-separator { color: #475569; }
-.breadcrumb-active { color: #38BDF8; font-weight: 600; }
+.breadcrumb-item { color: #7A7570; }
+.breadcrumb-separator { color: #C8C0B8; }
+.breadcrumb-active { color: #C8956C; font-weight: 600; }
+
+/* ── DataFrames ──────────────────────────────────────────────────────────── */
+.stDataFrame {
+    border-radius: 12px !important;
+    overflow: hidden;
+}
+
+/* ── Expander ────────────────────────────────────────────────────────────── */
+details {
+    border: 1px solid #E8E0D8 !important;
+    border-radius: 12px !important;
+    background: rgba(253, 252, 250, 0.5) !important;
+}
+
+/* ── Divider ─────────────────────────────────────────────────────────────── */
+hr {
+    border-color: #E8E0D8 !important;
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #F5F0EB; }
+::-webkit-scrollbar-thumb { background: #D8D0C8; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #C8C0B8; }
+
+/* ── Login page animated element ─────────────────────────────────────────── */
+@keyframes float-pulse {
+    0%, 100% { transform: translateY(0) scale(1); opacity: 0.7; }
+    50% { transform: translateY(-12px) scale(1.05); opacity: 1; }
+}
+@keyframes orbit {
+    0% { transform: rotate(0deg) translateX(60px) rotate(0deg); }
+    100% { transform: rotate(360deg) translateX(60px) rotate(-360deg); }
+}
+@keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+.login-animation-container {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    margin: 0 auto 24px;
+}
+.anim-ring {
+    position: absolute;
+    border: 2px solid rgba(200, 149, 108, 0.2);
+    border-radius: 50%;
+    animation: spin-slow 20s linear infinite;
+}
+.anim-ring-1 { width: 180px; height: 180px; top: 10px; left: 10px; }
+.anim-ring-2 { width: 140px; height: 140px; top: 30px; left: 30px; border-color: rgba(200, 149, 108, 0.12); animation-duration: 30s; animation-direction: reverse; }
+.anim-ring-3 { width: 100px; height: 100px; top: 50px; left: 50px; border-color: rgba(200, 149, 108, 0.08); animation-duration: 25s; }
+.anim-dot {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #C8956C;
+    animation: orbit 8s linear infinite;
+}
+.anim-dot-1 { top: 96px; left: 96px; }
+.anim-dot-2 { top: 96px; left: 96px; animation-duration: 12s; animation-direction: reverse; width: 6px; height: 6px; background: #A87B55; }
+.anim-dot-3 { top: 96px; left: 96px; animation-duration: 16s; width: 5px; height: 5px; background: #D4A843; }
+.anim-center {
+    position: absolute;
+    top: 82px;
+    left: 82px;
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #C8956C, #A87B55);
+    border-radius: 10px;
+    animation: float-pulse 4s ease-in-out infinite;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.anim-center-inner {
+    width: 14px;
+    height: 14px;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 4px;
+}
 </style>
 """
 
@@ -332,6 +437,20 @@ def glass_card(content_html: str) -> None:
     st.markdown(f'<div class="glass-card">{content_html}</div>', unsafe_allow_html=True)
 
 
+def login_animation() -> str:
+    return """
+<div class="login-animation-container">
+  <div class="anim-ring anim-ring-1"></div>
+  <div class="anim-ring anim-ring-2"></div>
+  <div class="anim-ring anim-ring-3"></div>
+  <div class="anim-dot anim-dot-1"></div>
+  <div class="anim-dot anim-dot-2"></div>
+  <div class="anim-dot anim-dot-3"></div>
+  <div class="anim-center"><div class="anim-center-inner"></div></div>
+</div>
+"""
+
+
 def header_banner(
     title: str,
     tenant_name: str,
@@ -340,7 +459,7 @@ def header_banner(
     sector: str = "",
     ml_state: str = "READY",
 ) -> None:
-    telem_badge = badge("MQTT ONLINE", "emerald") if telemetry_online else badge("MQTT STANDBY", "crimson")
+    telem_badge = badge("Online", "emerald") if telemetry_online else badge("Standby", "crimson")
     sector_badge = badge(sector.upper(), "cyan") if sector else ""
     ml_color = "emerald" if ml_state in ("READY", "TRAINED", "LIVE") else "amber"
     ml_badge = badge(f"ML: {ml_state}", ml_color)
@@ -395,39 +514,39 @@ def render_breadcrumbs(items: list[str]) -> None:
 
 PLOTLY_LAYOUT_DEFAULTS = dict(
     paper_bgcolor="rgba(0,0,0,0)",
-    plot_bgcolor="#0B0F17",
-    font=dict(color="#94A3B8", family="Inter, sans-serif", size=12),
+    plot_bgcolor="#F5F0EB",
+    font=dict(color="#4A4541", family="Inter, sans-serif", size=12),
     xaxis=dict(
-        gridcolor="#1E293B",
-        linecolor="#334155",
-        tickfont=dict(color="#64748B", family="JetBrains Mono, monospace"),
+        gridcolor="#E8E0D8",
+        linecolor="#D8D0C8",
+        tickfont=dict(color="#7A7570", family="Inter, sans-serif"),
     ),
     yaxis=dict(
-        gridcolor="#1E293B",
-        linecolor="#334155",
-        tickfont=dict(color="#64748B", family="JetBrains Mono, monospace"),
+        gridcolor="#E8E0D8",
+        linecolor="#D8D0C8",
+        tickfont=dict(color="#7A7570", family="Inter, sans-serif"),
     ),
     margin=dict(l=40, r=40, t=40, b=36),
     hovermode="x unified",
     legend=dict(
-        bgcolor="rgba(17, 24, 39, 0.9)",
-        bordercolor="#1E293B",
+        bgcolor="rgba(253, 252, 250, 0.9)",
+        bordercolor="#E8E0D8",
         borderwidth=1,
-        font=dict(color="#E2E8F0", size=11),
+        font=dict(color="#2D2A26", size=11),
     ),
 )
 
-TRACE_CYAN    = "#06B6D4"
-TRACE_EMERALD = "#10B981"
-TRACE_AMBER   = "#F59E0B"
-TRACE_CRIMSON = "#EF4444"
-TRACE_CORAL   = "#38BDF8"
+TRACE_CYAN    = "#6B8FA3"
+TRACE_EMERALD = "#5B9A6F"
+TRACE_AMBER   = "#D4A843"
+TRACE_CRIMSON = "#C7544A"
+TRACE_CORAL   = "#C8956C"
 
 
 def sidebar_user_profile(user: dict) -> None:
     role = user.get("role", "EMPLOYEE").upper()
     role_class = "manager" if role == "MANAGER" else "employee"
-    role_label = "FACILITY MANAGER" if role == "MANAGER" else "ZONE OPERATOR"
+    role_label = "Facility Manager" if role == "MANAGER" else "Zone Operator"
     full_name = user.get("fullName") or user.get("username", "Operator")
     assigned_loc = user.get("assignedLocation")
 
@@ -441,7 +560,7 @@ def sidebar_user_profile(user: dict) -> None:
         </style>
         """, unsafe_allow_html=True)
 
-    loc_text = "SCOPE: ALL ZONES" if role == "MANAGER" else f"ZONE: {(assigned_loc or 'UNASSIGNED').upper()}"
+    loc_text = "Scope: All Zones" if role == "MANAGER" else f"Zone: {(assigned_loc or 'Unassigned').capitalize()}"
 
     st.sidebar.markdown(f"""
 <div class="user-profile-card">
