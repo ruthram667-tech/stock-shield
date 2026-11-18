@@ -23,9 +23,9 @@
 #endif
 
 // ─── Configuration (EDIT THESE) ─────────────────────────────────
-const char* WIFI_SSID     = "YOUR_WIFI_SSID";       // must be 2.4 GHz
-const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
-const char* BACKEND_URL   = "http://192.168.1.100:8080/api/ingest"; // your PC's LAN IP
+const char* WIFI_SSID     = "YOUR_WIFI_SSID";       // ← PUT YOUR 2.4 GHz WiFi name here
+const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";   // ← PUT YOUR WiFi password here
+const char* BACKEND_URL   = "http://10.171.155.1:8080/api/ingest"; // your PC's LAN IP
 
 const char* TENANT_ID = "demo-tenant";
 const char* SHELF_ID  = "shelf-01";
