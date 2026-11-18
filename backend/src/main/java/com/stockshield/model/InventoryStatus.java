@@ -28,6 +28,10 @@ public class InventoryStatus {
     private Instant lastUpdated;
     private StockLevel stockLevel;
 
+    /** True once a real weight reading has arrived; prevents false low-stock alerts for shelves with no scale. */
+    @Builder.Default
+    private boolean weightReceived = false;
+
     /**
      * Dynamic sensor readings map: sensorType → latest value.
      * Instead of hardcoded temperature/humidity fields, any sensor type
@@ -62,6 +66,7 @@ public class InventoryStatus {
         }
 
         this.currentWeight = newWeight;
+        this.weightReceived = true;
         this.lastUpdated = now;
         this.stockLevel = classifyLevel(newWeight, fullWeight);
     }

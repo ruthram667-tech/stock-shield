@@ -129,7 +129,8 @@ public class AlertService {
     }
 
     private void checkStockLevel(InventoryStatus status) {
-        if (!status.needsReorder()) return;
+        // No weight reading yet (no scale on this shelf): nothing real to alert on
+        if (!status.isWeightReceived() || !status.needsReorder()) return;
 
         // Cooldown — don't spam alerts for the same item
         Instant cooldownSince = Instant.now().minus(cooldownMinutes, ChronoUnit.MINUTES);
@@ -142,11 +143,14 @@ public class AlertService {
                 ? AlertSeverity.CRITICAL
                 : (status.getStockLevel() == StockLevel.CRITICAL ? AlertSeverity.CRITICAL : AlertSeverity.WARNING);
 
+        double hoursLeft = status.estimatedHoursRemaining();
+        String eta = hoursLeft >= 24 * 365
+                ? "depletion rate unknown"
+                : String.format("~%.1f hours remaining", hoursLeft);
         String message = String.format(
-                "⚠️ LOW STOCK: %s at location %s — %.2f remaining (reorder point: %.2f, ~%.1f hours remaining)",
+                "⚠️ LOW STOCK: %s at location %s — %.2f remaining (reorder point: %.2f, %s)",
                 status.getItemId(), status.getLocationId(),
-                status.getCurrentWeight(), status.getReorderPoint(),
-                status.estimatedHoursRemaining()
+                status.getCurrentWeight(), status.getReorderPoint(), eta
         );
 
         log.warn(message);

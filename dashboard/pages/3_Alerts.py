@@ -75,7 +75,7 @@ try:
         time_col = 'createdAt' if 'createdAt' in df.columns else 'timestamp'
         type_col = 'alertType' if 'alertType' in df.columns else 'type'
 
-        df['Time']     = pd.to_datetime(df[time_col]).dt.strftime('%Y-%m-%d %H:%M:%S')
+        df['Time']     = pd.to_datetime(df[time_col], format="ISO8601").dt.strftime('%Y-%m-%d %H:%M:%S')
         df['Severity'] = df.get('severity', '')
         df['Type']     = df.get(type_col, '')
         df['Sensor']   = df.get('sensorType', 'general')

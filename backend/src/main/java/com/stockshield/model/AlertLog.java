@@ -2,6 +2,7 @@ package com.stockshield.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnTransformer;
 import java.time.Instant;
 
 /**
@@ -37,6 +38,7 @@ public class AlertLog {
     private String sensorType;
 
     @Enumerated(EnumType.STRING)
+    @ColumnTransformer(write = "?::alert_severity")
     @Column(nullable = false)
     private AlertSeverity severity;
 

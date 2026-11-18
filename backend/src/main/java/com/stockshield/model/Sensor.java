@@ -2,6 +2,7 @@ package com.stockshield.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnTransformer;
 import java.time.Instant;
 
 /**
@@ -37,6 +38,7 @@ public class Sensor {
     private Instant lastSeen;
 
     @Enumerated(EnumType.STRING)
+    @ColumnTransformer(write = "?::sensor_status")
     @Column(nullable = false)
     private SensorStatus status;
 

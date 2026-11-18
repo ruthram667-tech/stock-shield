@@ -256,6 +256,14 @@ public class MqttListenerService implements MqttCallback {
     // ─── Public API ─────────────────────────────────────────────────────────
 
     /**
+     * Entry point for HTTP-ingested readings (same pipeline as MQTT generic messages).
+     * Expects tenantId, locationId, sensorType, value (and itemId for weight).
+     */
+    public void ingestGeneric(JsonNode json) {
+        handleGenericMessage(json);
+    }
+
+    /**
      * O(1) lookup of current inventory status.
      */
     public InventoryStatus getStatus(String itemId) {

@@ -214,7 +214,7 @@ with main_tabs[0]:
                 if weight_pts:
                     df_w = pd.DataFrame(weight_pts)
                     ts_col = "time" if "time" in df_w.columns else "timestamp"
-                    df_w[ts_col] = pd.to_datetime(df_w[ts_col])
+                    df_w[ts_col] = pd.to_datetime(df_w[ts_col], format="ISO8601")
                     df_w = df_w.sort_values(ts_col)
                     fig.add_trace(go.Scatter(
                         x=df_w[ts_col], y=df_w["value"],
@@ -225,7 +225,7 @@ with main_tabs[0]:
                 if env_pts:
                     df_e = pd.DataFrame(env_pts)
                     ts_col = "time" if "time" in df_e.columns else "timestamp"
-                    df_e[ts_col] = pd.to_datetime(df_e[ts_col])
+                    df_e[ts_col] = pd.to_datetime(df_e[ts_col], format="ISO8601")
                     df_e = df_e.sort_values(ts_col)
                     if "measurement" in df_e.columns:
                         df_t = df_e[df_e["measurement"] == "temperature"]
@@ -245,13 +245,15 @@ with main_tabs[0]:
                                 yaxis="y2"
                             ))
 
-                fig.update_layout(
+                fig.update_layout(**{
                     **PLOTLY_LAYOUT_DEFAULTS,
-                    yaxis=dict(title="Weight (kg) / Temp (°C)", gridcolor="#E8E0D8"),
-                    yaxis2=dict(title="Humidity (%)", overlaying="y", side="right", gridcolor="rgba(232,224,216,0.3)"),
-                    height=340,
-                    legend=dict(orientation="h", y=1.12)
-                )
+                    "yaxis": {**PLOTLY_LAYOUT_DEFAULTS.get("yaxis", {}),
+                              "title": "Weight (kg) / Temp (°C)", "gridcolor": "#E8E0D8"},
+                    "yaxis2": dict(title="Humidity (%)", overlaying="y", side="right",
+                                   gridcolor="rgba(232,224,216,0.3)"),
+                    "height": 340,
+                    "legend": dict(orientation="h", y=1.12),
+                })
                 st.plotly_chart(fig, use_container_width=True)
             else:
                 st.markdown(f"""
