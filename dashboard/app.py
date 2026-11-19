@@ -360,51 +360,83 @@ with main_tabs[0]:
             st.markdown("<br>", unsafe_allow_html=True)
 
             if weight_pts or env_pts:
-                fig = go.Figure()
-                if weight_pts:
-                    df_w = pd.DataFrame(weight_pts)
-                    ts_col = "time" if "time" in df_w.columns else "timestamp"
-                    df_w[ts_col] = pd.to_datetime(df_w[ts_col])
-                    df_w = df_w.sort_values(ts_col)
-                    fig.add_trace(go.Scatter(
-                        x=df_w[ts_col], y=df_w["value"],
-                        name="Weight / Load Cell (kg)",
-                        line=dict(color=TRACE_EMERALD, width=2.5),
-                        mode="lines+markers"
-                    ))
+                # Parse all data with safe datetime parsing
+                def safe_dt(series):
+                    return pd.to_datetime(series, utc=True, format="mixed")
+
+                # ─── Chart 1: Temperature vs Time (Line Chart) ───────────────
+                section_header("Temperature Over Time")
                 if env_pts:
                     df_e = pd.DataFrame(env_pts)
                     ts_col = "time" if "time" in df_e.columns else "timestamp"
-                    df_e[ts_col] = pd.to_datetime(df_e[ts_col])
+                    df_e[ts_col] = safe_dt(df_e[ts_col])
                     df_e = df_e.sort_values(ts_col)
                     if "measurement" in df_e.columns:
                         df_t = df_e[df_e["measurement"] == "temperature"]
                         df_h = df_e[df_e["measurement"] == "humidity"]
-                        if not df_t.empty:
-                            fig.add_trace(go.Scatter(
-                                x=df_t[ts_col], y=df_t["value"],
-                                name="Temperature (°C)",
-                                line=dict(color=TRACE_CORAL, width=2),
-                                mode="lines+markers"
-                            ))
-                        if not df_h.empty:
-                            fig.add_trace(go.Scatter(
-                                x=df_h[ts_col], y=df_h["value"],
-                                name="Humidity (%)",
-                                line=dict(color=TRACE_AMBER, width=1.8, dash="dot"),
-                                yaxis="y2"
-                            ))
+                    else:
+                        df_t = pd.DataFrame()
+                        df_h = pd.DataFrame()
 
-                fig.update_layout(**{
-                    **PLOTLY_LAYOUT_DEFAULTS,
-                    "yaxis": {**PLOTLY_LAYOUT_DEFAULTS.get("yaxis", {}),
-                              "title": "Weight (kg) / Temp (°C)", "gridcolor": "#E8E0D8"},
-                    "yaxis2": dict(title="Humidity (%)", overlaying="y", side="right",
-                                   gridcolor="rgba(232,224,216,0.3)"),
-                    "height": 380,
-                    "legend": dict(orientation="h", y=1.12),
-                })
-                st.plotly_chart(fig, use_container_width=True)
+                    if not df_t.empty:
+                        fig_temp = go.Figure()
+                        fig_temp.add_trace(go.Scatter(
+                            x=df_t[ts_col], y=df_t["value"],
+                            name="Temperature (°C)",
+                            line=dict(color=TRACE_CORAL, width=2.5),
+                            mode="lines+markers", fill="tozeroy",
+                            fillcolor="rgba(200,149,108,0.1)"
+                        ))
+                        # Add threshold lines
+                        fig_temp.add_hline(y=TEMP_MAX, line_dash="dash", line_color=TRACE_CRIMSON, annotation_text=f"Max Safe ({TEMP_MAX}°C)")
+                        fig_temp.add_hline(y=TEMP_MIN, line_dash="dash", line_color=TRACE_AMBER, annotation_text=f"Min Safe ({TEMP_MIN}°C)")
+                        fig_temp.update_layout(**PLOTLY_LAYOUT_DEFAULTS, height=300,
+                            yaxis_title="Temperature (°C)", xaxis_title="Time")
+                        st.plotly_chart(fig_temp, use_container_width=True)
+                    else:
+                        st.info("No temperature data available.")
+                else:
+                    st.info("No environment data available.")
+
+                # ─── Chart 2: Humidity vs Time (Area Chart) ───────────────────
+                section_header("Humidity Over Time")
+                if env_pts and not df_h.empty:
+                    fig_hum = go.Figure()
+                    fig_hum.add_trace(go.Scatter(
+                        x=df_h[ts_col], y=df_h["value"],
+                        name="Humidity (%)",
+                        line=dict(color=TRACE_CYAN, width=2),
+                        mode="lines+markers", fill="tozeroy",
+                        fillcolor="rgba(107,143,163,0.12)"
+                    ))
+                    fig_hum.add_hline(y=HUM_MAX, line_dash="dash", line_color=TRACE_CRIMSON, annotation_text=f"Max Safe ({HUM_MAX}%)")
+                    fig_hum.add_hline(y=HUM_MIN, line_dash="dash", line_color=TRACE_AMBER, annotation_text=f"Min Safe ({HUM_MIN}%)")
+                    fig_hum.update_layout(**PLOTLY_LAYOUT_DEFAULTS, height=300,
+                        yaxis_title="Humidity (%)", xaxis_title="Time")
+                    st.plotly_chart(fig_hum, use_container_width=True)
+                else:
+                    st.info("No humidity data available.")
+
+                # ─── Chart 3: Weight / Load Cell vs Time (Bar Chart) ──────────
+                section_header("Load Cell Weight Over Time")
+                if weight_pts:
+                    df_w = pd.DataFrame(weight_pts)
+                    ts_col_w = "time" if "time" in df_w.columns else "timestamp"
+                    df_w[ts_col_w] = safe_dt(df_w[ts_col_w])
+                    df_w = df_w.sort_values(ts_col_w)
+
+                    fig_wt = go.Figure()
+                    fig_wt.add_trace(go.Bar(
+                        x=df_w[ts_col_w], y=df_w["value"],
+                        name="Weight (kg)",
+                        marker_color=TRACE_EMERALD,
+                        marker_line_width=0,
+                    ))
+                    fig_wt.update_layout(**PLOTLY_LAYOUT_DEFAULTS, height=300,
+                        yaxis_title="Weight (kg)", xaxis_title="Time", bargap=0.3)
+                    st.plotly_chart(fig_wt, use_container_width=True)
+                else:
+                    st.info("No weight/load cell data available.")
             else:
                 st.markdown(f"""
 <div class="glass-card" style="padding: 32px 24px; text-align: center;">
@@ -424,6 +456,9 @@ with main_tabs[0]:
             if inventory:
                 df_inv = pd.DataFrame(inventory)
                 df_inv["weight_pct"] = (df_inv["currentWeight"] / df_inv["fullWeight"]) * 100
+
+                # Bar Chart: Fill % per item
+                section_header("Shelf Fill Ratio (Bar Chart)")
                 fig_bar = px.bar(
                     df_inv, x="name", y="weight_pct",
                     color="stockLevel",
@@ -437,8 +472,53 @@ with main_tabs[0]:
                     },
                     labels={"weight_pct": "Fill Ratio (%)", "name": "Item"}
                 )
-                fig_bar.update_layout(**PLOTLY_LAYOUT_DEFAULTS, height=340)
+                fig_bar.update_layout(**PLOTLY_LAYOUT_DEFAULTS, height=320)
                 st.plotly_chart(fig_bar, use_container_width=True)
+
+                # Pie Chart: Stock Level Distribution
+                section_header("Stock Level Distribution (Pie Chart)")
+                stock_counts = df_inv["stockLevel"].value_counts().reset_index()
+                stock_counts.columns = ["Stock Level", "Count"]
+                color_map = {
+                    "FULL": TRACE_EMERALD, "OPTIMAL": TRACE_EMERALD,
+                    "ADEQUATE": TRACE_CYAN, "LOW": TRACE_AMBER,
+                    "CRITICAL": TRACE_CRIMSON, "EMPTY": TRACE_CRIMSON
+                }
+                fig_pie = px.pie(
+                    stock_counts, names="Stock Level", values="Count",
+                    color="Stock Level", color_discrete_map=color_map,
+                    hole=0.4
+                )
+                fig_pie.update_layout(
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    plot_bgcolor="#F5F0EB",
+                    font=dict(color="#4A4541", family="Inter, sans-serif"),
+                    height=320,
+                    legend=dict(font=dict(size=11)),
+                )
+                st.plotly_chart(fig_pie, use_container_width=True)
+
+                # Horizontal Bar: Current Weight vs Full Weight
+                section_header("Current vs Full Capacity (Gauge)")
+                fig_gauge = go.Figure()
+                fig_gauge.add_trace(go.Bar(
+                    y=df_inv["name"], x=df_inv["fullWeight"],
+                    name="Full Capacity", orientation="h",
+                    marker_color="rgba(232,224,216,0.5)",
+                    marker_line_width=0,
+                ))
+                fig_gauge.add_trace(go.Bar(
+                    y=df_inv["name"], x=df_inv["currentWeight"],
+                    name="Current Stock", orientation="h",
+                    marker_color=TRACE_EMERALD,
+                    marker_line_width=0,
+                ))
+                fig_gauge.update_layout(
+                    **PLOTLY_LAYOUT_DEFAULTS, height=300, barmode="overlay",
+                    xaxis_title="Weight (kg)", yaxis_title="",
+                    legend=dict(orientation="h", y=1.1),
+                )
+                st.plotly_chart(fig_gauge, use_container_width=True)
             else:
                 st.info("No inventory items found for this selection.")
 

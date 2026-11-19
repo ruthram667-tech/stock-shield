@@ -86,7 +86,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 if telemetry_data:
     df = pd.DataFrame(telemetry_data)
     ts_col = 'time' if 'time' in df.columns else 'timestamp'
-    df[ts_col] = pd.to_datetime(df[ts_col], format="ISO8601")
+    df[ts_col] = pd.to_datetime(df[ts_col], utc=True, format="mixed")
     df = df.sort_values(ts_col)
 
     latest_val = float(df['value'].iloc[-1])
