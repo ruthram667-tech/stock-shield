@@ -332,3 +332,16 @@ def fetch_tenant_models(tenant_id):
         return res.json()
     except Exception:
         return []
+
+
+def reset_hardware_mode():
+    try:
+        res = requests.post(f"{API_BASE}/simulator/reset", timeout=10)
+        return res.json()
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+        res.raise_for_status()
+        return res.json()
+    except Exception:
+        return []

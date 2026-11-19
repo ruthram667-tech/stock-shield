@@ -99,48 +99,43 @@ auto_refresh = st.sidebar.toggle("Auto-Refresh (5s)", value=False)
 if st.sidebar.button("Refresh Now", use_container_width=True):
     st.rerun()
 
-# ─── Simulator Controls (Manager Only) ─────────────────────────────────────
+# ─── Simulator & Hardware Mode Controls (Manager Only) ──────────────────────
 if is_manager:
     st.sidebar.divider()
-    st.sidebar.markdown('<div class="section-header">Edge Simulator</div>', unsafe_allow_html=True)
+    st.sidebar.markdown('<div class="section-header">Hardware / Simulator Mode</div>', unsafe_allow_html=True)
 
     if "sim_running" not in st.session_state:
-        st.session_state.sim_running = True  # Assume running by default
+        st.session_state.sim_running = True
 
     if st.session_state.sim_running:
         st.sidebar.markdown("""
 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
   <div style="width: 10px; height: 10px; border-radius: 50%; background: #5B9A6F; animation: pulse-gentle 2s ease-in-out infinite;"></div>
-  <span style="font-size: 0.78rem; color: #5B9A6F; font-weight: 500;">Simulator Running</span>
+  <span style="font-size: 0.78rem; color: #5B9A6F; font-weight: 500;">Simulator Active</span>
 </div>
 """, unsafe_allow_html=True)
-        if st.sidebar.button("Stop Simulator", use_container_width=True, type="primary"):
-            try:
-                import subprocess
-                subprocess.run(["docker", "stop", "ss-edge-simulator"], capture_output=True, timeout=10)
-                st.session_state.sim_running = False
-                st.toast("Simulator stopped!")
-                st.rerun()
-            except Exception as e:
-                st.sidebar.error(f"Could not stop: {e}")
+        if st.sidebar.button("Switch to Hardware Only (Reset Fake Data)", use_container_width=True, type="primary"):
+            api.reset_hardware_mode()
+            st.session_state.sim_running = False
+            st.toast("Switched to Hardware Mode! All fake records cleared.")
+            st.rerun()
     else:
         st.sidebar.markdown("""
 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-  <div style="width: 10px; height: 10px; border-radius: 50%; background: #C7544A;"></div>
-  <span style="font-size: 0.78rem; color: #C7544A; font-weight: 500;">Simulator Stopped</span>
+  <div style="width: 10px; height: 10px; border-radius: 50%; background: #C8956C;"></div>
+  <span style="font-size: 0.78rem; color: #C8956C; font-weight: 500;">Hardware Mode (Waiting for ESP32)</span>
 </div>
 """, unsafe_allow_html=True)
-        if st.sidebar.button("Start Simulator", use_container_width=True):
-            try:
-                import subprocess
-                subprocess.run(["docker", "start", "ss-edge-simulator"], capture_output=True, timeout=10)
-                st.session_state.sim_running = True
-                st.toast("Simulator started!")
-                st.rerun()
-            except Exception as e:
-                st.sidebar.error(f"Could not start: {e}")
+        if st.sidebar.button("Reset Sensor Data to 0", use_container_width=True):
+            api.reset_hardware_mode()
+            st.toast("Sensors reset to OFFLINE, alerts cleared.")
+            st.rerun()
 
-    st.sidebar.caption("Simulates 3 sensors per shelf: weight (load cell), temperature, humidity.")
+        if st.sidebar.button("Enable Simulated Stream", use_container_width=True):
+            st.session_state.sim_running = True
+            st.rerun()
+
+    st.sidebar.caption("Hardware Mode clears simulated records so only physical ESP32 packets show.")
 
 st.sidebar.divider()
 
@@ -513,11 +508,13 @@ with main_tabs[0]:
                     marker_color=TRACE_EMERALD,
                     marker_line_width=0,
                 ))
-                fig_gauge.update_layout(
-                    **PLOTLY_LAYOUT_DEFAULTS, height=300, barmode="overlay",
-                    xaxis_title="Weight (kg)", yaxis_title="",
-                    legend=dict(orientation="h", y=1.1),
-                )
+                gauge_layout = dict(PLOTLY_LAYOUT_DEFAULTS)
+                gauge_layout["height"] = 300
+                gauge_layout["barmode"] = "overlay"
+                gauge_layout["xaxis_title"] = "Weight (kg)"
+                gauge_layout["yaxis_title"] = ""
+                gauge_layout["legend"] = dict(orientation="h", y=1.1)
+                fig_gauge.update_layout(**gauge_layout)
                 st.plotly_chart(fig_gauge, use_container_width=True)
             else:
                 st.info("No inventory items found for this selection.")
