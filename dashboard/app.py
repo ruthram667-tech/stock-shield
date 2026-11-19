@@ -279,13 +279,83 @@ with main_tabs[0]:
                         except (ValueError, TypeError):
                             pass
 
+            # ─── Threshold Check & Alarm ──────────────────────────────────────
+            TEMP_MIN, TEMP_MAX = 20.0, 25.0
+            HUM_MIN, HUM_MAX = 40.0, 60.0
+            alarm_messages = []
+
+            if latest_temp is not None:
+                if latest_temp < TEMP_MIN:
+                    alarm_messages.append(f"TEMPERATURE LOW: {latest_temp:.1f} °C (below {TEMP_MIN} °C)")
+                elif latest_temp > TEMP_MAX:
+                    alarm_messages.append(f"TEMPERATURE HIGH: {latest_temp:.1f} °C (above {TEMP_MAX} °C)")
+
+            if latest_hum is not None:
+                if latest_hum < HUM_MIN:
+                    alarm_messages.append(f"HUMIDITY LOW: {latest_hum:.1f}% (below {HUM_MIN}%)")
+                elif latest_hum > HUM_MAX:
+                    alarm_messages.append(f"HUMIDITY HIGH: {latest_hum:.1f}% (above {HUM_MAX}%)")
+
+            # Play buzzer alarm sound if any threshold is breached
+            if alarm_messages:
+                st.markdown("""
+<script>
+(function() {
+    if (window._ssAlarmPlayed) return;
+    window._ssAlarmPlayed = true;
+    try {
+        var ctx = new (window.AudioContext || window.webkitAudioContext)();
+        function beep(freq, startTime, duration) {
+            var osc = ctx.createOscillator();
+            var gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'square';
+            osc.frequency.value = freq;
+            gain.gain.value = 0.3;
+            osc.start(startTime);
+            osc.stop(startTime + duration);
+        }
+        // 3 rapid alarm beeps
+        var t = ctx.currentTime;
+        beep(880, t, 0.15);
+        beep(880, t + 0.25, 0.15);
+        beep(880, t + 0.50, 0.15);
+        beep(1200, t + 0.75, 0.3);
+        setTimeout(function(){ window._ssAlarmPlayed = false; }, 6000);
+    } catch(e) {}
+})();
+</script>
+""", unsafe_allow_html=True)
+
+                for msg in alarm_messages:
+                    st.error(f"ALERT: {msg}")
+
+                st.markdown(f"""
+<div class="glass-card" style="padding: 16px 20px; border-left: 4px solid #C7544A; background: rgba(199, 84, 74, 0.08);">
+  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+    <div style="width: 12px; height: 12px; border-radius: 50%; background: #C7544A; animation: pulse-gentle 1s ease-in-out infinite;"></div>
+    <span style="font-size: 0.88rem; font-weight: 600; color: #C7544A;">THRESHOLD BREACH DETECTED</span>
+  </div>
+  <div style="font-size: 0.82rem; color: #4A4541;">
+    Safe Range: Temperature {TEMP_MIN}°C – {TEMP_MAX}°C | Humidity {HUM_MIN}% – {HUM_MAX}%
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+            # ─── Metric Cards ─────────────────────────────────────────────────
+            temp_ok = latest_temp is not None and TEMP_MIN <= latest_temp <= TEMP_MAX
+            hum_ok = latest_hum is not None and HUM_MIN <= latest_hum <= HUM_MAX
+
             r1, r2, r3 = st.columns(3)
             with r1:
                 st.metric("Load Cell (Weight)", f"{latest_weight:.2f} kg" if latest_weight is not None else "No data", delta="HX711 Strain Gauge" if latest_weight is not None else "Waiting")
             with r2:
-                st.metric("Temperature", f"{latest_temp:.1f} °C" if latest_temp is not None else "No data", delta="DHT22 Probe" if latest_temp is not None else "Waiting")
+                temp_delta = "Normal (20-25°C)" if temp_ok else ("ALERT! Out of range" if latest_temp is not None else "Waiting")
+                st.metric("Temperature", f"{latest_temp:.1f} °C" if latest_temp is not None else "No data", delta=temp_delta, delta_color="normal" if temp_ok else "inverse")
             with r3:
-                st.metric("Humidity", f"{latest_hum:.1f} %" if latest_hum is not None else "No data", delta="DHT22 Probe" if latest_hum is not None else "Waiting")
+                hum_delta = "Normal (40-60%)" if hum_ok else ("ALERT! Out of range" if latest_hum is not None else "Waiting")
+                st.metric("Humidity", f"{latest_hum:.1f} %" if latest_hum is not None else "No data", delta=hum_delta, delta_color="normal" if hum_ok else "inverse")
 
             st.markdown("<br>", unsafe_allow_html=True)
 
