@@ -99,6 +99,49 @@ auto_refresh = st.sidebar.toggle("Auto-Refresh (5s)", value=False)
 if st.sidebar.button("Refresh Now", use_container_width=True):
     st.rerun()
 
+# ─── Simulator Controls (Manager Only) ─────────────────────────────────────
+if is_manager:
+    st.sidebar.divider()
+    st.sidebar.markdown('<div class="section-header">Edge Simulator</div>', unsafe_allow_html=True)
+
+    if "sim_running" not in st.session_state:
+        st.session_state.sim_running = True  # Assume running by default
+
+    if st.session_state.sim_running:
+        st.sidebar.markdown("""
+<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+  <div style="width: 10px; height: 10px; border-radius: 50%; background: #5B9A6F; animation: pulse-gentle 2s ease-in-out infinite;"></div>
+  <span style="font-size: 0.78rem; color: #5B9A6F; font-weight: 500;">Simulator Running</span>
+</div>
+""", unsafe_allow_html=True)
+        if st.sidebar.button("Stop Simulator", use_container_width=True, type="primary"):
+            try:
+                import subprocess
+                subprocess.run(["docker", "stop", "ss-edge-simulator"], capture_output=True, timeout=10)
+                st.session_state.sim_running = False
+                st.toast("Simulator stopped!")
+                st.rerun()
+            except Exception as e:
+                st.sidebar.error(f"Could not stop: {e}")
+    else:
+        st.sidebar.markdown("""
+<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+  <div style="width: 10px; height: 10px; border-radius: 50%; background: #C7544A;"></div>
+  <span style="font-size: 0.78rem; color: #C7544A; font-weight: 500;">Simulator Stopped</span>
+</div>
+""", unsafe_allow_html=True)
+        if st.sidebar.button("Start Simulator", use_container_width=True):
+            try:
+                import subprocess
+                subprocess.run(["docker", "start", "ss-edge-simulator"], capture_output=True, timeout=10)
+                st.session_state.sim_running = True
+                st.toast("Simulator started!")
+                st.rerun()
+            except Exception as e:
+                st.sidebar.error(f"Could not start: {e}")
+
+    st.sidebar.caption("Simulates 3 sensors per shelf: weight (load cell), temperature, humidity.")
+
 st.sidebar.divider()
 
 st.sidebar.markdown('<div class="section-header">Organization & Scope</div>', unsafe_allow_html=True)
@@ -201,31 +244,68 @@ with main_tabs[0]:
             with c_sel2:
                 selected_window = st.selectbox("Window", ["1h", "6h", "24h"], index=0, key="cmd_win_select")
 
+            # Fetch all 3 readings: weight, temperature, humidity
             weight_pts = api.fetch_telemetry(selected_shelf, range_str=selected_window)
-            env_pts    = api.fetch_environment_history(selected_shelf, range_str=selected_window)
+            if not weight_pts:
+                weight_pts = api.fetch_generic_telemetry(active_tenant_id, selected_shelf, "weight", range_str=selected_window)
 
+            env_pts = api.fetch_environment_history(selected_shelf, range_str=selected_window)
             if not env_pts:
                 temp_pts = api.fetch_generic_telemetry(active_tenant_id, selected_shelf, "temperature", range_str=selected_window)
                 hum_pts  = api.fetch_generic_telemetry(active_tenant_id, selected_shelf, "humidity", range_str=selected_window)
                 env_pts  = temp_pts + hum_pts
+
+            # Show latest reading cards for all 3 metrics
+            latest_weight = None
+            latest_temp = None
+            latest_hum = None
+
+            if weight_pts:
+                try:
+                    latest_weight = float(weight_pts[-1].get("value", 0))
+                except (IndexError, ValueError, TypeError):
+                    pass
+            if env_pts:
+                for pt in reversed(env_pts):
+                    m = pt.get("measurement", pt.get("sensorType", ""))
+                    if m == "temperature" and latest_temp is None:
+                        try:
+                            latest_temp = float(pt.get("value", 0))
+                        except (ValueError, TypeError):
+                            pass
+                    if m == "humidity" and latest_hum is None:
+                        try:
+                            latest_hum = float(pt.get("value", 0))
+                        except (ValueError, TypeError):
+                            pass
+
+            r1, r2, r3 = st.columns(3)
+            with r1:
+                st.metric("Load Cell (Weight)", f"{latest_weight:.2f} kg" if latest_weight is not None else "No data", delta="HX711 Strain Gauge" if latest_weight is not None else "Waiting")
+            with r2:
+                st.metric("Temperature", f"{latest_temp:.1f} °C" if latest_temp is not None else "No data", delta="DHT22 Probe" if latest_temp is not None else "Waiting")
+            with r3:
+                st.metric("Humidity", f"{latest_hum:.1f} %" if latest_hum is not None else "No data", delta="DHT22 Probe" if latest_hum is not None else "Waiting")
+
+            st.markdown("<br>", unsafe_allow_html=True)
 
             if weight_pts or env_pts:
                 fig = go.Figure()
                 if weight_pts:
                     df_w = pd.DataFrame(weight_pts)
                     ts_col = "time" if "time" in df_w.columns else "timestamp"
-                    df_w[ts_col] = pd.to_datetime(df_w[ts_col], format="ISO8601")
+                    df_w[ts_col] = pd.to_datetime(df_w[ts_col])
                     df_w = df_w.sort_values(ts_col)
                     fig.add_trace(go.Scatter(
                         x=df_w[ts_col], y=df_w["value"],
-                        name="Weight (kg)",
+                        name="Weight / Load Cell (kg)",
                         line=dict(color=TRACE_EMERALD, width=2.5),
                         mode="lines+markers"
                     ))
                 if env_pts:
                     df_e = pd.DataFrame(env_pts)
                     ts_col = "time" if "time" in df_e.columns else "timestamp"
-                    df_e[ts_col] = pd.to_datetime(df_e[ts_col], format="ISO8601")
+                    df_e[ts_col] = pd.to_datetime(df_e[ts_col])
                     df_e = df_e.sort_values(ts_col)
                     if "measurement" in df_e.columns:
                         df_t = df_e[df_e["measurement"] == "temperature"]
@@ -233,7 +313,7 @@ with main_tabs[0]:
                         if not df_t.empty:
                             fig.add_trace(go.Scatter(
                                 x=df_t[ts_col], y=df_t["value"],
-                                name="Temp (°C)",
+                                name="Temperature (°C)",
                                 line=dict(color=TRACE_CORAL, width=2),
                                 mode="lines+markers"
                             ))
@@ -251,7 +331,7 @@ with main_tabs[0]:
                               "title": "Weight (kg) / Temp (°C)", "gridcolor": "#E8E0D8"},
                     "yaxis2": dict(title="Humidity (%)", overlaying="y", side="right",
                                    gridcolor="rgba(232,224,216,0.3)"),
-                    "height": 340,
+                    "height": 380,
                     "legend": dict(orientation="h", y=1.12),
                 })
                 st.plotly_chart(fig, use_container_width=True)

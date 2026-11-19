@@ -68,7 +68,6 @@ services:
   # ═══════════════════════════════════════════════
 
   edge-simulator:
-    profiles: ["simulator"]
     build:
       context: ./edge-simulator
       dockerfile: Dockerfile
